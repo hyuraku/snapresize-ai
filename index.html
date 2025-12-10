@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no, email=no, address=no" />
+    <!-- Content Security Policy - XSS攻撃防御 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://cdn-lfs.huggingface.co https://cdn-lfs-us-1.huggingface.co https://cdn-lfs.hf.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <title>SnapResize AI - 画像一括リサイズ・背景除去ツール</title>
+    <meta name="description" content="ブラウザ内で完結するAI画像処理ツール。SNS向けリサイズ、背景除去、透かし追加を一括処理。プライバシー保護、サーバー送信なし。" />
+    <meta name="keywords" content="画像リサイズ,背景除去,AI,Instagram,Twitter,透かし,一括変換,image resize,background removal" />
+    <link rel="canonical" href="https://snapresize.ai/" />
+    
+    <!-- OGP (Open Graph Protocol) -->
+    <meta property="og:title" content="SnapResize AI - 画像一括リサイズ・背景除去" />
+    <meta property="og:description" content="ブラウザ内で完結するAI画像処理ツール。SNS向け一括変換。プライバシー保護、サーバー送信なし。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://snapresize.ai/" />
+    <meta property="og:image" content="https://snapresize.ai/ogp.png" />
+    <meta property="og:site_name" content="SnapResize AI" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:locale:alternate" content="en_US" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SnapResize AI - 画像一括リサイズ・背景除去" />
+    <meta name="twitter:description" content="ブラウザ内で完結するAI画像処理ツール。SNS向け一括変換。" />
+    <meta name="twitter:image" content="https://snapresize.ai/ogp.png" />
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
