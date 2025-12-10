@@ -26,8 +26,6 @@ A fully browser-based AI image processing tool. Transform images for multiple so
 
 ```
 /snapresize-ai
-├── /docs
-│   └── ARCHITECTURE.md          # Technical design document
 ├── /public                      # PWA assets
 ├── /src
 │   ├── /components              # React components
@@ -191,10 +189,6 @@ npm run test:coverage
 | Firefox 141+ | Partial (WASM) | Linux unsupported |
 
 **When WebGPU is unavailable**: WASM fallback (up to 100x slower)
-
-## Documentation
-
-- [Technical Architecture](./docs/ARCHITECTURE.md) - Complete technical specifications
 
 ## Contributing
 
