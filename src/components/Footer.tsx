@@ -1,13 +1,6 @@
-import { getTranslation } from '../constants/translations';
-import { Heart, Github } from 'lucide-react';
+import { Github } from 'lucide-react';
 
-interface FooterProps {
-  lang?: 'ja' | 'en';
-}
-
-export const Footer = ({ lang = 'ja' }: FooterProps) => {
-  const t = (key: string) => getTranslation(key, lang);
-
+export const Footer = () => {
   return (
     <footer className="mt-12 pt-8 border-t border-[--color-sand]">
       <div className="flex justify-center">

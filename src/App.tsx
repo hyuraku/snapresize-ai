@@ -152,7 +152,7 @@ function App() {
           <PrivacyNotice lang={lang} variant="compact" />
         </div>
 
-        <Footer lang={lang} />
+        <Footer />
       </div>
     </div>
   );
