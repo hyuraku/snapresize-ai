@@ -63,15 +63,17 @@ npm run test:e2e
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| React | 18.3.1 | UI Framework |
+| React | 19.2.3 | UI Framework |
 | TypeScript | 5.6.0 | Type Safety |
-| Vite | 5.4.0 | Build Tool |
-| Zustand | 4.5.0 | State Management |
-| Transformers.js | 3.1.0 | AI/ML (CDN) |
-| Tailwind CSS | 3.4.0 | Styling (CDN) |
+| Vite | 7.2.6 | Build Tool |
+| Zustand | 5.0.9 | State Management |
+| Transformers.js | 3.8.0 | AI/ML (Background Removal) |
+| Tailwind CSS | 3.4.0 | Styling |
 | JSZip | 3.10.1 | ZIP Export |
 | Comlink | 4.4.1 | Worker Communication |
 | idb | 8.0.0 | IndexedDB Wrapper |
+| Lucide React | 0.561.0 | Icon Library |
+| File Saver | 2.0.5 | File Download |
 
 ## SNS Format Support
 
