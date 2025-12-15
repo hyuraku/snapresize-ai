@@ -12,12 +12,12 @@ interface ResourceTracker {
 class MemoryManager {
   private trackedResources = new Map<string, ResourceTracker>();
   private blobUrls = new Set<string>();
-  
+
   // 1GB制限
   private readonly MAX_MEMORY = 1024 * 1024 * 1024;
   // 800MB警告閾値
   private readonly WARNING_THRESHOLD = 0.8;
-  
+
   // リスナー
   private warningListeners: Set<(usage: number) => void> = new Set();
 
@@ -63,7 +63,8 @@ class MemoryManager {
   getCurrentUsage(): number {
     // Chrome の performance.memory が利用可能な場合
     if ('memory' in performance) {
-      return (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
+      return (performance as unknown as { memory: { usedJSHeapSize: number } }).memory
+        .usedJSHeapSize;
     }
 
     // フォールバック: 追跡リソースから推定
@@ -79,7 +80,7 @@ class MemoryManager {
    */
   canAllocate(size: number): boolean {
     const current = this.getCurrentUsage();
-    return (current + size) < this.MAX_MEMORY;
+    return current + size < this.MAX_MEMORY;
   }
 
   /**
@@ -117,8 +118,8 @@ class MemoryManager {
     }
 
     // クリーンアップが落ち着くまで待機
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     console.log('MemoryManager: Cleanup complete');
   }
 
@@ -148,14 +149,16 @@ class MemoryManager {
 
     if (usage > threshold) {
       console.warn(`MemoryManager: High memory usage: ${this.formatBytes(usage)}`);
-      
+
       // 警告イベントを発行
-      window.dispatchEvent(new CustomEvent('memory-warning', {
-        detail: { usage, max: this.MAX_MEMORY }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('memory-warning', {
+          detail: { usage, max: this.MAX_MEMORY },
+        })
+      );
 
       // リスナーに通知
-      this.warningListeners.forEach(listener => listener(usage));
+      this.warningListeners.forEach((listener) => listener(usage));
     }
   }
 

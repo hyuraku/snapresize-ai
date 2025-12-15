@@ -147,7 +147,8 @@ class ModelLoader {
         throw new Error('Failed to get response reader');
       }
 
-      const contentLength = parseInt(response.headers.get('Content-Length') || '0') || MODEL_SIZE_ESTIMATE;
+      const contentLength =
+        parseInt(response.headers.get('Content-Length') || '0') || MODEL_SIZE_ESTIMATE;
       const chunks: Uint8Array[] = [];
       let receivedLength = 0;
 

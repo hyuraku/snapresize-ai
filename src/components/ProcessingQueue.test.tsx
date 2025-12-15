@@ -40,16 +40,10 @@ const ProcessingQueue: React.FC<ProcessingQueueProps> = ({ files, onClear }) => 
           {files.map((file) => (
             <div key={file.id} data-testid={`file-item-${file.id}`}>
               <span data-testid="file-name">{file.name}</span>
-              <span
-                data-testid="file-status"
-                className={getStatusColor(file.status)}
-              >
+              <span data-testid="file-status" className={getStatusColor(file.status)}>
                 {file.progress}%
               </span>
-              <div
-                data-testid="progress-bar"
-                style={{ width: `${file.progress}%` }}
-              />
+              <div data-testid="progress-bar" style={{ width: `${file.progress}%` }} />
             </div>
           ))}
         </div>

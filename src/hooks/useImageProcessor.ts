@@ -27,7 +27,7 @@ export const useImageProcessor = () => {
   useEffect(() => {
     if (settings.enableBackgroundRemoval && !workerRef.current) {
       modelReadyRef.current = false;
-      
+
       // Web Worker を動的にインポート
       workerRef.current = new Worker(
         new URL('../workers/backgroundRemoval.worker.ts', import.meta.url),
@@ -50,12 +50,18 @@ export const useImageProcessor = () => {
             });
             break;
           case 'result':
-            console.log('[useImageProcessor] result受信:', { id: payload.id, hasBuffer: !!payload.buffer });
+            console.log('[useImageProcessor] result受信:', {
+              id: payload.id,
+              hasBuffer: !!payload.buffer,
+            });
             if (payload.id && payload.buffer) {
               // ArrayBuffer から ImageData を再構築
               const uint8Array = new Uint8ClampedArray(payload.buffer);
               const imageData = new ImageData(uint8Array, payload.width, payload.height);
-              console.log('[useImageProcessor] maskCacheに保存:', payload.id, { width: imageData.width, height: imageData.height });
+              console.log('[useImageProcessor] maskCacheに保存:', payload.id, {
+                width: imageData.width,
+                height: imageData.height,
+              });
               maskCacheRef.current.set(payload.id, imageData);
               // 処理完了後、modelStateを「ready」に戻す
               setModelState({
@@ -128,7 +134,7 @@ export const useImageProcessor = () => {
         let maskData: ImageData | undefined;
         if (settings.enableBackgroundRemoval && workerRef.current) {
           console.log('[useImageProcessor] 背景除去開始');
-          
+
           // モデルが準備完了するまで待機
           if (!modelReadyRef.current) {
             console.log('[useImageProcessor] モデル準備待機中...');
@@ -142,13 +148,19 @@ export const useImageProcessor = () => {
             }
             console.log('[useImageProcessor] モデル準備完了');
           }
-          
+
           const imageData = await blobToImageData(file.blob);
-          console.log('[useImageProcessor] imageData取得:', { width: imageData.width, height: imageData.height, dataLength: imageData.data.length });
-          
+          console.log('[useImageProcessor] imageData取得:', {
+            width: imageData.width,
+            height: imageData.height,
+            dataLength: imageData.data.length,
+          });
+
           // ImageData を転送可能な形式に変換して Worker に送信
           const buffer = imageData.data.buffer.slice(0);
-          console.log('[useImageProcessor] buffer作成:', { byteLength: buffer.byteLength });
+          console.log('[useImageProcessor] buffer作成:', {
+            byteLength: buffer.byteLength,
+          });
           workerRef.current.postMessage(
             {
               type: 'process',
@@ -171,11 +183,18 @@ export const useImageProcessor = () => {
               throw new Error('背景除去処理がタイムアウトしました');
             }
             await new Promise((r) => setTimeout(r, 100));
-            updateFileStatus(fileId, 'processing', Math.min(70, 30 + ((Date.now() - startTime) / timeout) * 40));
+            updateFileStatus(
+              fileId,
+              'processing',
+              Math.min(70, 30 + ((Date.now() - startTime) / timeout) * 40)
+            );
           }
 
           maskData = maskCacheRef.current.get(fileId);
-          console.log('[useImageProcessor] maskData取得:', { fileId, hasMaskData: !!maskData });
+          console.log('[useImageProcessor] maskData取得:', {
+            fileId,
+            hasMaskData: !!maskData,
+          });
           maskCacheRef.current.delete(fileId);
         }
 
@@ -190,7 +209,11 @@ export const useImageProcessor = () => {
 
         let canvas: HTMLCanvasElement;
 
-        console.log('[useImageProcessor] 最終maskData:', { hasMaskData: !!maskData, width: maskData?.width, height: maskData?.height });
+        console.log('[useImageProcessor] 最終maskData:', {
+          hasMaskData: !!maskData,
+          width: maskData?.width,
+          height: maskData?.height,
+        });
         if (maskData) {
           console.log('[useImageProcessor] 背景除去パス実行');
           // 背景除去済みの場合はマスク画像を使用
@@ -244,11 +267,7 @@ export const useImageProcessor = () => {
         updateFileStatus(fileId, 'processing', 90);
 
         // Blob に変換
-        const blob = await canvasToBlob(
-          canvas,
-          settings.quality,
-          settings.enableBackgroundRemoval
-        );
+        const blob = await canvasToBlob(canvas, settings.quality, settings.enableBackgroundRemoval);
 
         updateFileStatus(fileId, 'completed', 100);
 

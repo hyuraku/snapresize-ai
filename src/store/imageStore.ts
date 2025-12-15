@@ -18,10 +18,18 @@ interface ImageStore {
   isProcessing: boolean;
 
   // File operations
-  addFiles: (files: File[]) => Promise<{ added: number; rejected: Array<{ name: string; error: string }> }>;
+  addFiles: (files: File[]) => Promise<{
+    added: number;
+    rejected: Array<{ name: string; error: string }>;
+  }>;
   removeFile: (id: string) => void;
   clearFiles: () => void;
-  updateFileStatus: (id: string, status: ImageFile['status'], progress?: number, error?: string) => void;
+  updateFileStatus: (
+    id: string,
+    status: ImageFile['status'],
+    progress?: number,
+    error?: string
+  ) => void;
 
   // Processed image operations
   addProcessedImage: (image: ProcessedImage) => void;
@@ -93,7 +101,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
     return {
       added: imageFiles.length,
-      rejected: invalidFiles.map((f) => ({ name: f.file.name, error: f.error })),
+      rejected: invalidFiles.map((f) => ({
+        name: f.file.name,
+        error: f.error,
+      })),
     };
   },
 
@@ -110,9 +121,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   updateFileStatus: (id, status, progress, error) => {
     set((state) => ({
       files: state.files.map((f) =>
-        f.id === id
-          ? { ...f, status, progress: progress ?? f.progress, error }
-          : f
+        f.id === id ? { ...f, status, progress: progress ?? f.progress, error } : f
       ),
     }));
   },

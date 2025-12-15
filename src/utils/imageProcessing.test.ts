@@ -27,7 +27,11 @@ const getStatusColor = (status: string): string => {
   return map[status] || 'text-slate-400';
 };
 
-const getPresetSize = (preset: string, customWidth?: number, customHeight?: number): { width: number; height: number } => {
+const getPresetSize = (
+  preset: string,
+  customWidth?: number,
+  customHeight?: number
+): { width: number; height: number } => {
   if (preset === 'custom') {
     return {
       width: customWidth || 1080,
@@ -38,7 +42,7 @@ const getPresetSize = (preset: string, customWidth?: number, customHeight?: numb
   const sizes: Record<string, { width: number; height: number }> = {
     'instagram-square': { width: 1080, height: 1080 },
     'instagram-story': { width: 1080, height: 1920 },
-    'twitter': { width: 1600, height: 900 },
+    twitter: { width: 1600, height: 900 },
   };
 
   return sizes[preset] || { width: 1080, height: 1080 };

@@ -63,12 +63,15 @@ export const useDownload = () => {
     }
   }, [processed]);
 
-  const downloadSingle = useCallback((index: number) => {
-    const item = processed[index];
-    if (!item) return;
+  const downloadSingle = useCallback(
+    (index: number) => {
+      const item = processed[index];
+      if (!item) return;
 
-    saveAs(item.blob, item.name);
-  }, [processed]);
+      saveAs(item.blob, item.name);
+    },
+    [processed]
+  );
 
   return {
     downloadAll,

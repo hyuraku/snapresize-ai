@@ -72,13 +72,15 @@ const translations: Record<Language, Translations> = {
     fileFailed: 'エラー',
     // Privacy
     privacyTitle: 'プライバシー保護',
-    privacyDesc: 'すべての処理はお使いのブラウザ内で完結。画像がサーバーに送信されることはありません。',
+    privacyDesc:
+      'すべての処理はお使いのブラウザ内で完結。画像がサーバーに送信されることはありません。',
     // Footer
     footerCopyright: 'SnapResize AI - オープンソースソフトウェア（MIT License）',
     footerTerms: '利用規約',
     footerPrivacy: 'プライバシーポリシー',
     // Alert
-    alertInvalidFile: '対応していない形式か、ファイルサイズが大きすぎます。\nJPG/PNG/WebP形式で50MB以下のファイルを選択してください。',
+    alertInvalidFile:
+      '対応していない形式か、ファイルサイズが大きすぎます。\nJPG/PNG/WebP形式で50MB以下のファイルを選択してください。',
     // Selection messages
     imagesSelected: '枚の画像を選択中',
     imagesCompleted: '枚の処理が完了しました！',
@@ -91,7 +93,8 @@ const translations: Record<Language, Translations> = {
     statusHighMemory: 'メモリ使用量が高い',
     // WASM Warning
     wasmWarningTitle: 'パフォーマンス警告',
-    wasmWarningDesc: 'WebGPU非対応のため、処理が最大100倍遅くなる可能性があります。最適なパフォーマンスには以下のブラウザを推奨します：',
+    wasmWarningDesc:
+      'WebGPU非対応のため、処理が最大100倍遅くなる可能性があります。最適なパフォーマンスには以下のブラウザを推奨します：',
     // Privacy Notice (Full)
     privacyCompact: 'すべての処理はブラウザ内で完結',
     privacyFullTitle: 'あなたのプライバシーは保護されています',
@@ -184,7 +187,8 @@ const translations: Record<Language, Translations> = {
     footerTerms: 'Terms',
     footerPrivacy: 'Privacy Policy',
     // Alert
-    alertInvalidFile: 'Unsupported format or file too large.\nPlease select JPG/PNG/WebP files under 50MB.',
+    alertInvalidFile:
+      'Unsupported format or file too large.\nPlease select JPG/PNG/WebP files under 50MB.',
     // Selection messages
     imagesSelected: ' images selected',
     imagesCompleted: ' images completed!',
@@ -197,7 +201,8 @@ const translations: Record<Language, Translations> = {
     statusHighMemory: 'High Memory Usage',
     // WASM Warning
     wasmWarningTitle: 'Performance Warning',
-    wasmWarningDesc: 'WebGPU not supported. Processing may be up to 100x slower. For optimal performance, use one of these browsers:',
+    wasmWarningDesc:
+      'WebGPU not supported. Processing may be up to 100x slower. For optimal performance, use one of these browsers:',
     // Privacy Notice (Full)
     privacyCompact: 'All processing happens in your browser',
     privacyFullTitle: 'Your Privacy is Protected',

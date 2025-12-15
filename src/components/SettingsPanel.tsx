@@ -1,4 +1,12 @@
-import { ChevronDown, Sparkles, Type, SlidersHorizontal, Wand2, Smartphone, Palette } from 'lucide-react';
+import {
+  ChevronDown,
+  Sparkles,
+  Type,
+  SlidersHorizontal,
+  Wand2,
+  Smartphone,
+  Palette,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useImageStore } from '../store/imageStore';
 import { getTranslation } from '../constants/translations';
@@ -93,11 +101,15 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                         className="sr-only"
                         aria-label={`${lang === 'ja' ? preset.label : preset.labelEn}${presetKey !== 'custom' ? ` ${preset.width} × ${preset.height}` : ''}`}
                       />
-                      <span className={`text-sm font-medium ${isSelected ? 'text-[--color-coral]' : 'text-[--color-navy]'}`}>
+                      <span
+                        className={`text-sm font-medium ${isSelected ? 'text-[--color-coral]' : 'text-[--color-navy]'}`}
+                      >
                         {lang === 'ja' ? preset.label : preset.labelEn}
                       </span>
                       {presetKey !== 'custom' && (
-                        <span className={`text-xs mt-0.5 ${isSelected ? 'text-[--color-coral]/70' : 'text-[--color-navy-light]'}`}>
+                        <span
+                          className={`text-xs mt-0.5 ${isSelected ? 'text-[--color-coral]/70' : 'text-[--color-navy-light]'}`}
+                        >
                           {preset.width} × {preset.height}
                         </span>
                       )}
@@ -112,7 +124,9 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
             {settings.preset === 'custom' && (
               <div className="flex gap-3 mt-3">
                 <div className="flex-1">
-                  <label className="text-xs text-[--color-navy-light] mb-1 block font-medium">Width (px)</label>
+                  <label className="text-xs text-[--color-navy-light] mb-1 block font-medium">
+                    Width (px)
+                  </label>
                   <input
                     type="number"
                     min="100"
@@ -125,7 +139,9 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs text-[--color-navy-light] mb-1 block font-medium">Height (px)</label>
+                  <label className="text-xs text-[--color-navy-light] mb-1 block font-medium">
+                    Height (px)
+                  </label>
                   <input
                     type="number"
                     min="100"
@@ -175,10 +191,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                     {modelState.message}
                   </div>
                   <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${modelState.progress}%` }}
-                    />
+                    <div className="progress-fill" style={{ width: `${modelState.progress}%` }} />
                   </div>
                 </div>
               )}
@@ -207,7 +220,14 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                   aria-checked={settings.enableWatermark}
                   aria-label={t('watermarkToggle')}
                   className={`toggle-switch ${settings.enableWatermark ? 'active' : ''}`}
-                  style={settings.enableWatermark ? { background: 'linear-gradient(90deg, var(--color-sage), var(--color-sage-light))' } : {}}
+                  style={
+                    settings.enableWatermark
+                      ? {
+                          background:
+                            'linear-gradient(90deg, var(--color-sage), var(--color-sage-light))',
+                        }
+                      : {}
+                  }
                   onClick={(e) => {
                     e.preventDefault();
                     setWatermark(!settings.enableWatermark);
@@ -224,32 +244,39 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                     className="input-field"
                   />
                   <div className="grid grid-cols-3 gap-1.5">
-                    {(['topLeft', 'center', 'topRight', 'bottomLeft', 'center', 'bottomRight'] as WatermarkPosition[]).map(
-                      (pos, idx) => {
-                        if (idx === 4) return null;
-                        return (
-                          <label
-                            key={pos + idx}
-                            className={`flex cursor-pointer items-center justify-center rounded-lg border-2 py-1.5 text-xs font-medium transition-all ${
-                              settings.watermarkPosition === pos
-                                ? 'border-[--color-sage] bg-[--color-sage]/10 text-[--color-sage]'
-                                : 'border-[--color-sand] text-[--color-navy-light] hover:border-[--color-sage]/30'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="watermarkPos"
-                              value={pos}
-                              checked={settings.watermarkPosition === pos}
-                              onChange={() => setWatermark(true, undefined, pos)}
-                              className="sr-only"
-                              aria-label={t(`pos${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}
-                            />
-                            {t(`pos${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}
-                          </label>
-                        );
-                      }
-                    )}
+                    {(
+                      [
+                        'topLeft',
+                        'center',
+                        'topRight',
+                        'bottomLeft',
+                        'center',
+                        'bottomRight',
+                      ] as WatermarkPosition[]
+                    ).map((pos, idx) => {
+                      if (idx === 4) return null;
+                      return (
+                        <label
+                          key={pos + idx}
+                          className={`flex cursor-pointer items-center justify-center rounded-lg border-2 py-1.5 text-xs font-medium transition-all ${
+                            settings.watermarkPosition === pos
+                              ? 'border-[--color-sage] bg-[--color-sage]/10 text-[--color-sage]'
+                              : 'border-[--color-sand] text-[--color-navy-light] hover:border-[--color-sage]/30'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="watermarkPos"
+                            value={pos}
+                            checked={settings.watermarkPosition === pos}
+                            onChange={() => setWatermark(true, undefined, pos)}
+                            className="sr-only"
+                            aria-label={t(`pos${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}
+                          />
+                          {t(`pos${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -264,9 +291,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 <p className="text-sm font-bold text-[--color-navy]">{t('qualityLabel')}</p>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[--color-coral]/10 to-[--color-sage]/10 px-4 py-1.5 border border-[--color-coral]/20">
-                <span className="text-2xl font-bold text-[--color-coral]">
-                  {settings.quality}
-                </span>
+                <span className="text-2xl font-bold text-[--color-coral]">{settings.quality}</span>
                 <span className="text-sm text-[--color-navy-light]">%</span>
               </div>
             </div>
@@ -284,7 +309,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 aria-valuetext={`${settings.quality}%`}
                 className="w-full h-3 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[--color-coral] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                 style={{
-                  background: `linear-gradient(to right, var(--color-coral) 0%, var(--color-coral-light) ${((settings.quality - 60) / 40) * 100}%, var(--color-sand) ${((settings.quality - 60) / 40) * 100}%)`
+                  background: `linear-gradient(to right, var(--color-coral) 0%, var(--color-coral-light) ${((settings.quality - 60) / 40) * 100}%, var(--color-sand) ${((settings.quality - 60) / 40) * 100}%)`,
                 }}
               />
             </div>

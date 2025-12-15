@@ -7,11 +7,7 @@ interface PrivacyNoticeProps {
   onDismiss?: () => void;
 }
 
-export const PrivacyNotice = ({
-  lang = 'ja',
-  variant = 'full',
-  onDismiss,
-}: PrivacyNoticeProps) => {
+export const PrivacyNotice = ({ lang = 'ja', variant = 'full', onDismiss }: PrivacyNoticeProps) => {
   const t = (key: string) => getTranslation(key, lang);
 
   if (variant === 'compact') {
@@ -58,7 +54,9 @@ export const PrivacyNotice = ({
         <div className="flex items-start gap-3 p-3 rounded-xl bg-white/50">
           <Server className="h-5 w-5 text-[--color-sage] flex-shrink-0" />
           <div>
-            <span className="font-semibold text-sm text-[--color-navy]">{t('privacyNoUpload')}</span>
+            <span className="font-semibold text-sm text-[--color-navy]">
+              {t('privacyNoUpload')}
+            </span>
             <p className="text-xs text-[--color-navy-light] mt-0.5">{t('privacyNoUploadDesc')}</p>
           </div>
         </div>
@@ -66,7 +64,9 @@ export const PrivacyNotice = ({
         <div className="flex items-start gap-3 p-3 rounded-xl bg-white/50">
           <Cookie className="h-5 w-5 text-[--color-sage] flex-shrink-0" />
           <div>
-            <span className="font-semibold text-sm text-[--color-navy]">{t('privacyNoTracking')}</span>
+            <span className="font-semibold text-sm text-[--color-navy]">
+              {t('privacyNoTracking')}
+            </span>
             <p className="text-xs text-[--color-navy-light] mt-0.5">{t('privacyNoTrackingDesc')}</p>
           </div>
         </div>
@@ -74,7 +74,9 @@ export const PrivacyNotice = ({
         <div className="flex items-start gap-3 p-3 rounded-xl bg-white/50">
           <Database className="h-5 w-5 text-[--color-sage] flex-shrink-0" />
           <div>
-            <span className="font-semibold text-sm text-[--color-navy]">{t('privacyModelCache')}</span>
+            <span className="font-semibold text-sm text-[--color-navy]">
+              {t('privacyModelCache')}
+            </span>
             <p className="text-xs text-[--color-navy-light] mt-0.5">{t('privacyModelCacheDesc')}</p>
           </div>
         </div>
@@ -82,7 +84,9 @@ export const PrivacyNotice = ({
         <div className="flex items-start gap-3 p-3 rounded-xl bg-white/50">
           <Trash2 className="h-5 w-5 text-[--color-sage] flex-shrink-0" />
           <div>
-            <span className="font-semibold text-sm text-[--color-navy]">{t('privacyDeletable')}</span>
+            <span className="font-semibold text-sm text-[--color-navy]">
+              {t('privacyDeletable')}
+            </span>
             <p className="text-xs text-[--color-navy-light] mt-0.5">{t('privacyDeletableDesc')}</p>
           </div>
         </div>

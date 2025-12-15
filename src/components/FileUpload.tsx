@@ -14,17 +14,32 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.currentTarget.classList.add('ring-2', 'ring-[--color-coral]', 'ring-offset-2', 'bg-[--color-coral]/5');
+    e.currentTarget.classList.add(
+      'ring-2',
+      'ring-[--color-coral]',
+      'ring-offset-2',
+      'bg-[--color-coral]/5'
+    );
   }, []);
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.currentTarget.classList.remove('ring-2', 'ring-[--color-coral]', 'ring-offset-2', 'bg-[--color-coral]/5');
+    e.currentTarget.classList.remove(
+      'ring-2',
+      'ring-[--color-coral]',
+      'ring-offset-2',
+      'bg-[--color-coral]/5'
+    );
   }, []);
 
   const handleDrop = useCallback(
     async (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      e.currentTarget.classList.remove('ring-2', 'ring-[--color-coral]', 'ring-offset-2', 'bg-[--color-coral]/5');
+      e.currentTarget.classList.remove(
+        'ring-2',
+        'ring-[--color-coral]',
+        'ring-offset-2',
+        'bg-[--color-coral]/5'
+      );
       const droppedFiles = Array.from(e.dataTransfer.files);
       const result = await addFiles(droppedFiles);
       if (result.rejected.length > 0) {

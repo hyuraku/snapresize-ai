@@ -46,11 +46,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   return (
-    <div
-      data-testid="drop-zone"
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
+    <div data-testid="drop-zone" onDrop={handleDrop} onDragOver={handleDragOver}>
       <input
         data-testid="file-input"
         type="file"
@@ -128,8 +124,9 @@ describe('FileUpload Component', () => {
   it('should respect max file limit', async () => {
     render(<FileUpload onFilesAdded={mockOnFilesAdded} maxFiles={2} />);
 
-    const files = Array.from({ length: 5 }, (_, i) =>
-      new File([`test${i}`], `test${i}.png`, { type: 'image/png' })
+    const files = Array.from(
+      { length: 5 },
+      (_, i) => new File([`test${i}`], `test${i}.png`, { type: 'image/png' })
     );
     const input = screen.getByTestId('file-input') as HTMLInputElement;
 
@@ -145,7 +142,9 @@ describe('FileUpload Component', () => {
     render(<FileUpload onFilesAdded={mockOnFilesAdded} maxFileSize={maxSize} />);
 
     const smallFile = new File(['x'], 'small.png', { type: 'image/png' });
-    const largeFile = new File(['x'.repeat(2000)], 'large.png', { type: 'image/png' });
+    const largeFile = new File(['x'.repeat(2000)], 'large.png', {
+      type: 'image/png',
+    });
 
     const input = screen.getByTestId('file-input') as HTMLInputElement;
 
