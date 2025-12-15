@@ -48,15 +48,21 @@ export const Sidebar = ({ lang = 'ja', currentStep }: SidebarProps) => {
                         : 'bg-[--color-sand] text-[--color-navy-light]'
                   }`}
                 >
-                  {isCompleted ? <Check className="w-4 h-4" /> : <IconComponent className="w-4 h-4" />}
+                  {isCompleted ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <IconComponent className="w-4 h-4" />
+                  )}
                 </span>
-                <span className={`text-sm font-medium ${
-                  isCompleted
-                    ? 'text-[--color-sage]'
-                    : isCurrent
-                      ? 'text-[--color-coral]'
-                      : 'text-[--color-navy-light]'
-                }`}>
+                <span
+                  className={`text-sm font-medium ${
+                    isCompleted
+                      ? 'text-[--color-sage]'
+                      : isCurrent
+                        ? 'text-[--color-coral]'
+                        : 'text-[--color-navy-light]'
+                  }`}
+                >
                   {step.label}
                 </span>
                 {isCurrent && (
@@ -99,13 +105,25 @@ export const Sidebar = ({ lang = 'ja', currentStep }: SidebarProps) => {
       <section className="rounded-2xl bg-gradient-to-br from-[--color-sage]/10 to-[--color-sage]/5 p-5 border border-[--color-sage]/20">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[--color-sage]/20">
-            <svg className="w-5 h-5 text-[--color-sage]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-5 h-5 text-[--color-sage]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
           </div>
           <div>
             <h3 className="text-sm font-bold text-[--color-navy]">{t('privacyTitle')}</h3>
-            <p className="mt-1.5 text-xs text-[--color-navy-light] leading-relaxed">{t('privacyDesc')}</p>
+            <p className="mt-1.5 text-xs text-[--color-navy-light] leading-relaxed">
+              {t('privacyDesc')}
+            </p>
           </div>
         </div>
       </section>

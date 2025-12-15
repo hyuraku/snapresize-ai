@@ -81,7 +81,7 @@ class CapabilityDetector {
       }
 
       // アダプタ情報を取得
-      const adapterInfo = await adapter.requestAdapterInfo?.() || null;
+      const adapterInfo = (await adapter.requestAdapterInfo?.()) || null;
 
       console.log('CapabilityDetector: WebGPU available', {
         vendor: adapterInfo?.vendor,
@@ -138,7 +138,7 @@ class CapabilityDetector {
    */
   getEstimatedTimeString(backend: Backend, imageCount: number): string {
     const totalSeconds = this.estimateProcessingTime(backend, imageCount);
-    
+
     if (totalSeconds < 60) {
       return `約${Math.ceil(totalSeconds)}秒`;
     } else if (totalSeconds < 3600) {
@@ -155,7 +155,7 @@ class CapabilityDetector {
    */
   isWebGPUSupportedBrowser(): boolean {
     const ua = navigator.userAgent;
-    
+
     // Chrome 113+
     const chromeMatch = ua.match(/Chrome\/(\d+)/);
     if (chromeMatch && chromeMatch[1] && parseInt(chromeMatch[1], 10) >= 113) {
@@ -187,12 +187,7 @@ class CapabilityDetector {
    * 推奨ブラウザを取得
    */
   getRecommendedBrowsers(): string[] {
-    return [
-      'Chrome 113以上',
-      'Edge 113以上',
-      'Opera 99以上',
-      'Safari 26以上（macOS/iOS）',
-    ];
+    return ['Chrome 113以上', 'Edge 113以上', 'Opera 99以上', 'Safari 26以上（macOS/iOS）'];
   }
 
   /**

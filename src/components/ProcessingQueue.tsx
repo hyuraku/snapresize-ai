@@ -9,29 +9,29 @@ interface ProcessingQueueProps {
 
 const getStatusConfig = (status: ProcessingStatus) => {
   const configs = {
-    pending: { 
-      color: 'text-[--color-navy-light]', 
+    pending: {
+      color: 'text-[--color-navy-light]',
       bg: 'bg-[--color-sand]',
       progressBg: 'bg-[--color-sand]',
-      icon: Image
+      icon: Image,
     },
-    processing: { 
-      color: 'text-[--color-coral]', 
+    processing: {
+      color: 'text-[--color-coral]',
       bg: 'bg-[--color-coral]/10',
       progressBg: 'bg-gradient-to-r from-[--color-coral] to-[--color-coral-light]',
-      icon: Loader2
+      icon: Loader2,
     },
-    completed: { 
-      color: 'text-[--color-sage]', 
+    completed: {
+      color: 'text-[--color-sage]',
       bg: 'bg-[--color-sage]/10',
       progressBg: 'bg-[--color-sage]',
-      icon: CheckCircle
+      icon: CheckCircle,
     },
-    failed: { 
-      color: 'text-red-500', 
+    failed: {
+      color: 'text-red-500',
       bg: 'bg-red-50',
       progressBg: 'bg-red-400',
-      icon: XCircle
+      icon: XCircle,
     },
   };
   return configs[status] || configs.pending;
@@ -53,7 +53,8 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
             <h2 className="text-lg font-bold text-[--color-navy]">{t('queueTitle')}</h2>
           </div>
           <span className="text-sm font-medium text-[--color-navy-light] bg-[--color-sand]/50 px-3 py-1 rounded-full">
-            {files.length}{unit}
+            {files.length}
+            {unit}
           </span>
         </div>
         <div className="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1">
@@ -68,16 +69,16 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
             files.map((file) => {
               const config = getStatusConfig(file.status);
               const IconComponent = config.icon;
-              
+
               return (
-                <div 
-                  key={file.id} 
+                <div
+                  key={file.id}
                   className={`rounded-xl border border-[--color-sand] p-4 transition-all ${config.bg}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <IconComponent 
-                        className={`w-4 h-4 flex-shrink-0 ${config.color} ${file.status === 'processing' ? 'animate-spin' : ''}`} 
+                      <IconComponent
+                        className={`w-4 h-4 flex-shrink-0 ${config.color} ${file.status === 'processing' ? 'animate-spin' : ''}`}
                       />
                       <span className="text-sm font-medium text-[--color-navy] truncate">
                         {file.name}

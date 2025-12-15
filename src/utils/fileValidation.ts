@@ -31,8 +31,7 @@ export async function validateImageFile(file: File): Promise<ValidationResult> {
       bytes[7] === 0x0a;
 
     // JPEG: FF D8 FF
-    const isJPEG =
-      bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isJPEG = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
 
     // WebP: 52 49 46 46 ... 57 45 42 50 (RIFF....WEBP)
     const isWebP =
@@ -67,7 +66,7 @@ export async function validateImageFile(file: File): Promise<ValidationResult> {
     // MIMEタイプの整合性チェック（JPEGはimage/jpegとimage/jpg両方許容）
     const validMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const fileMimeType = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
-    
+
     if (!validMimeTypes.includes(fileMimeType)) {
       return {
         isValid: false,
@@ -104,9 +103,10 @@ export async function validateImageFile(file: File): Promise<ValidationResult> {
 /**
  * 複数のファイルを検証し、有効なファイルのみを返す
  */
-export async function validateImageFiles(
-  files: File[]
-): Promise<{ validFiles: File[]; invalidFiles: Array<{ file: File; error: string }> }> {
+export async function validateImageFiles(files: File[]): Promise<{
+  validFiles: File[];
+  invalidFiles: Array<{ file: File; error: string }>;
+}> {
   const validFiles: File[] = [];
   const invalidFiles: Array<{ file: File; error: string }> = [];
 
@@ -116,7 +116,10 @@ export async function validateImageFiles(
       if (result.isValid) {
         validFiles.push(file);
       } else {
-        invalidFiles.push({ file, error: result.error || 'Unknown validation error' });
+        invalidFiles.push({
+          file,
+          error: result.error || 'Unknown validation error',
+        });
       }
     })
   );

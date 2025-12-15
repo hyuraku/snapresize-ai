@@ -8,7 +8,9 @@ afterEach(() => {
 });
 
 // Mock Web APIs that might not be available in jsdom
-(globalThis as typeof globalThis & { URL: typeof URL }).URL.createObjectURL = vi.fn(() => 'mock-url');
+(globalThis as typeof globalThis & { URL: typeof URL }).URL.createObjectURL = vi.fn(
+  () => 'mock-url'
+);
 (globalThis as typeof globalThis & { URL: typeof URL }).URL.revokeObjectURL = vi.fn();
 
 // Mock HTMLCanvasElement methods
@@ -29,12 +31,13 @@ HTMLCanvasElement.prototype.toBlob = vi.fn((callback) => {
 });
 
 // Mock FileReader
-(globalThis as typeof globalThis & { FileReader: typeof FileReader }).FileReader = class MockFileReader {
-  readAsDataURL = vi.fn();
-  onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
-  onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
-  result: string | ArrayBuffer | null = '';
-} as unknown as typeof FileReader;
+(globalThis as typeof globalThis & { FileReader: typeof FileReader }).FileReader =
+  class MockFileReader {
+    readAsDataURL = vi.fn();
+    onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
+    onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
+    result: string | ArrayBuffer | null = '';
+  } as unknown as typeof FileReader;
 
 // Mock crypto.randomUUID
 if (typeof globalThis.crypto === 'undefined') {

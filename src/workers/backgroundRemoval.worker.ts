@@ -34,7 +34,9 @@ const initModel = async () => {
       payload: {
         status: 'loading',
         progress: 0,
-        message: hasWebGPU ? 'WebGPUモードで初期化中...' : 'WASMモードで初期化中（処理が遅くなります）...',
+        message: hasWebGPU
+          ? 'WebGPUモードで初期化中...'
+          : 'WASMモードで初期化中（処理が遅くなります）...',
         device,
       },
     });
@@ -127,7 +129,7 @@ const processImage = async (width: number, height: number, buffer: ArrayBuffer, 
 
     // RawImage に変換
     const image = await RawImage.fromBlob(blob);
-    
+
     // プロセッサで前処理
     const { pixel_values } = await processor(image);
 
@@ -186,7 +188,11 @@ const processImage = async (width: number, height: number, buffer: ArrayBuffer, 
       }
     }
 
-    console.log('[Worker] 処理完了、結果送信:', { id, width: outputImageData.width, height: outputImageData.height });
+    console.log('[Worker] 処理完了、結果送信:', {
+      id,
+      width: outputImageData.width,
+      height: outputImageData.height,
+    });
     // ImageData を転送可能な形式に変換
     const resultBuffer = outputImageData.data.buffer.slice(0);
     self.postMessage(
@@ -215,7 +221,12 @@ const processImage = async (width: number, height: number, buffer: ArrayBuffer, 
 // メッセージハンドラ
 self.onmessage = async (e: MessageEvent) => {
   const { type, payload } = e.data;
-  console.log('[Worker] メッセージ受信:', type, { hasBuffer: !!payload?.buffer, id: payload?.id, width: payload?.width, height: payload?.height });
+  console.log('[Worker] メッセージ受信:', type, {
+    hasBuffer: !!payload?.buffer,
+    id: payload?.id,
+    width: payload?.width,
+    height: payload?.height,
+  });
 
   switch (type) {
     case 'init':

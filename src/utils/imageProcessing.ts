@@ -91,10 +91,7 @@ export const addWatermark = (
 /**
  * 背景除去済みの画像を適用する
  */
-export const applyBackgroundRemoval = (
-  canvas: HTMLCanvasElement,
-  maskData: ImageData
-): void => {
+export const applyBackgroundRemoval = (canvas: HTMLCanvasElement, maskData: ImageData): void => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 

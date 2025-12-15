@@ -17,12 +17,12 @@
   --color-navy: #2c3e50;
   --color-navy-light: #415b76;
   --color-charcoal: #1a1a2e;
-  
+
   /* Typography */
   font-family: 'Outfit', 'Noto Sans JP', sans-serif;
   line-height: 1.6;
   font-weight: 400;
-  
+
   /* Theme */
   color-scheme: light;
   background-color: var(--color-cream);
@@ -36,7 +36,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: 
+  background:
     radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 107, 91, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse 60% 40% at 80% 10%, rgba(126, 184, 154, 0.1) 0%, transparent 50%),
     radial-gradient(ellipse 50% 50% at 50% 100%, rgba(255, 133, 119, 0.05) 0%, transparent 50%),
@@ -50,7 +50,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 
+  box-shadow:
     0 4px 30px rgba(0, 0, 0, 0.03),
     0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -64,13 +64,13 @@ body {
 
 /* Soft Shadow */
 .soft-shadow {
-  box-shadow: 
+  box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.04),
     0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .soft-shadow-lg {
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.05),
     0 16px 48px rgba(0, 0, 0, 0.08);
 }
@@ -81,12 +81,17 @@ body {
 }
 
 .gradient-border::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, var(--color-coral), var(--color-sage), var(--color-coral-light));
+  background: linear-gradient(
+    135deg,
+    var(--color-coral),
+    var(--color-sage),
+    var(--color-coral-light)
+  );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -131,13 +136,22 @@ body {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes fade-in-up {
@@ -152,8 +166,13 @@ body {
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .animate-float {
@@ -161,7 +180,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -175,10 +194,18 @@ body {
 }
 
 /* Stagger delays */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+}
 
 /* Tag/Badge Styles */
 .tag {
@@ -287,7 +314,7 @@ body {
   height: 1.125rem;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
 }
 

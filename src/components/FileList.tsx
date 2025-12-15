@@ -11,29 +11,29 @@ interface FileListProps {
 
 const getStatusConfig = (status: ProcessingStatus, t: (key: string) => string) => {
   const configs = {
-    pending: { 
-      text: t('filePending'), 
+    pending: {
+      text: t('filePending'),
       color: 'text-[--color-navy-light]',
       bgColor: 'bg-[--color-sand]/30',
-      icon: Clock
+      icon: Clock,
     },
-    processing: { 
-      text: t('fileProcessing'), 
+    processing: {
+      text: t('fileProcessing'),
       color: 'text-[--color-coral]',
       bgColor: 'bg-[--color-coral]/5',
-      icon: Loader2
+      icon: Loader2,
     },
-    completed: { 
-      text: t('fileCompleted'), 
+    completed: {
+      text: t('fileCompleted'),
       color: 'text-[--color-sage]',
       bgColor: 'bg-[--color-sage]/5',
-      icon: CheckCircle
+      icon: CheckCircle,
     },
-    failed: { 
-      text: t('fileFailed'), 
+    failed: {
+      text: t('fileFailed'),
       color: 'text-red-500',
       bgColor: 'bg-red-50',
-      icon: XCircle
+      icon: XCircle,
     },
   };
   return configs[status] || configs.pending;
@@ -56,9 +56,9 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
         const IconComponent = config.icon;
         const isCompleted = file.status === 'completed';
         // originalId で処理済み画像を検索
-        const processedItem = processed.find(p => p.originalId === file.id);
+        const processedItem = processed.find((p) => p.originalId === file.id);
         const processedIndex = processedItem ? processed.indexOf(processedItem) : -1;
-        
+
         return (
           <div
             key={file.id}
@@ -75,7 +75,9 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
             </div>
             <div className="flex items-center gap-2 ml-3">
               <div className={`flex items-center gap-1.5 text-xs font-medium ${config.color}`}>
-                <IconComponent className={`w-4 h-4 ${file.status === 'processing' ? 'animate-spin' : ''}`} />
+                <IconComponent
+                  className={`w-4 h-4 ${file.status === 'processing' ? 'animate-spin' : ''}`}
+                />
                 <span className="hidden sm:inline">{config.text}</span>
               </div>
               {isCompleted && processedIndex >= 0 && (

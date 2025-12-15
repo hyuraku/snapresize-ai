@@ -60,10 +60,7 @@ class ImageProcessingService {
     });
   }
 
-  async runBatch(
-    targetSize: { width: number; height: number },
-    quality: number
-  ): Promise<void> {
+  async runBatch(targetSize: { width: number; height: number }, quality: number): Promise<void> {
     if (this.state.processing || !this.state.files.length) return;
 
     this.state.processing = true;
@@ -166,8 +163,9 @@ describe('Image Processing Integration Tests', () => {
   });
 
   it('should respect maximum file count', async () => {
-    const files = Array.from({ length: 60 }, (_, i) =>
-      new File([`test${i}`], `test${i}.png`, { type: 'image/png' })
+    const files = Array.from(
+      { length: 60 },
+      (_, i) => new File([`test${i}`], `test${i}.png`, { type: 'image/png' })
     );
 
     await service.addFiles(files);
@@ -178,11 +176,9 @@ describe('Image Processing Integration Tests', () => {
   it('should filter files exceeding size limit', async () => {
     const maxSize = 50 * 1024 * 1024; // 50MB
     const smallFile = new File(['x'], 'small.png', { type: 'image/png' });
-    const largeFile = new File(
-      ['x'.repeat(maxSize + 1)],
-      'large.png',
-      { type: 'image/png' }
-    );
+    const largeFile = new File(['x'.repeat(maxSize + 1)], 'large.png', {
+      type: 'image/png',
+    });
 
     await service.addFiles([smallFile, largeFile]);
 
@@ -261,7 +257,12 @@ describe('Image Processing Integration Tests', () => {
     const progressValues: number[] = [];
     const originalProcessImage = service.processImage.bind(service);
 
-    service.processImage = async function (this: ImageProcessingService, file, targetSize, quality) {
+    service.processImage = async function (
+      this: ImageProcessingService,
+      file,
+      targetSize,
+      quality
+    ) {
       progressValues.push(file.progress);
       return originalProcessImage(file, targetSize, quality);
     };
