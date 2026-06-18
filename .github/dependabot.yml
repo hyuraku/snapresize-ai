@@ -1,0 +1,31 @@
+# Dependabot の設定
+# 依存パッケージと GitHub Actions の更新を自動でチェックし、PR を作成する
+version: 2
+updates:
+  # npm パッケージの更新
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    # 同時に開く PR の上限
+    open-pull-requests-limit: 10
+    # 自動マージワークフローで判別しやすいようにラベルを付与
+    labels:
+      - 'dependencies'
+    # コミットメッセージに更新種別のプレフィックスを付与
+    commit-message:
+      prefix: 'chore'
+      prefix-development: 'chore(dev)'
+      include: 'scope'
+
+  # GitHub Actions 自身の更新
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+      - 'github-actions'
+    commit-message:
+      prefix: 'ci'
