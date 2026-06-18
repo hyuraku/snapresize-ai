@@ -1,0 +1,60 @@
+# Dependabot の PR を条件に応じて自動マージするワークフロー
+#
+# マージ条件:
+#   - dev 依存 (development): minor / patch を自動マージ
+#   - 非 dev 依存 (production など): patch のみ自動マージ
+#   - major アップデートは常に手動レビュー（自動マージしない）
+name: Dependabot Auto Merge
+
+on:
+  # Dependabot が作成・更新した PR に対して実行
+  pull_request:
+
+# auto-merge の有効化と承認に必要な権限
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # Dependabot が作成した PR のみを対象にする
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      # PR のメタデータ（更新種別・依存種別）を取得
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+
+      # 自動マージ対象かどうかを判定
+      #   patch          -> dev / 非 dev どちらも対象
+      #   minor          -> dev のみ対象
+      #   major          -> 対象外（手動レビュー）
+      - name: Determine auto-merge eligibility
+        id: check
+        env:
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEP_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+        run: |
+          eligible=false
+          if [ "$UPDATE_TYPE" = "version-update:semver-patch" ]; then
+            # patch はすべての依存で自動マージ
+            eligible=true
+          elif [ "$UPDATE_TYPE" = "version-update:semver-minor" ] && [ "$DEP_TYPE" = "direct:development" ]; then
+            # minor は dev 依存のみ自動マージ
+            eligible=true
+          fi
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+          echo "判定結果: update-type=$UPDATE_TYPE / dependency-type=$DEP_TYPE / eligible=$eligible"
+
+      # 条件を満たした PR を承認して auto-merge を有効化
+      - name: Approve and enable auto-merge
+        if: ${{ steps.check.outputs.eligible == 'true' }}
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
