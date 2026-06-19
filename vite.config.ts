@@ -45,6 +45,23 @@ export default defineConfig({
         // Cache AI model
         runtimeCaching: [
           {
+            // self-host フォント(woff2)はオンデマンドでキャッシュ。
+            // Noto Sans JP は unicode-range で124サブセットに分割されるため、
+            // 全てを precache せず実際に使われたサブセットだけ保存する。
+            urlPattern: /\.woff2$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'snapresize-ai-fonts',
+              expiration: {
+                maxEntries: 140,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@huggingface\/transformers/,
             handler: 'CacheFirst',
             options: {

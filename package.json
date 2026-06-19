@@ -18,6 +18,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource-variable/noto-sans-jp": "^5.2.10",
+    "@fontsource-variable/outfit": "^5.2.8",
     "@huggingface/transformers": "^3.8.0",
     "comlink": "^4.4.1",
     "file-saver": "^2.0.5",
