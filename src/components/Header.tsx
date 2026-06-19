@@ -13,14 +13,14 @@ export const Header = ({ lang = 'ja' }: HeaderProps) => {
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         {/* Logo & Title */}
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[--color-coral] to-[--color-coral-dark] shadow-lg shadow-[--color-coral]/25 animate-float">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-(--color-coral) to-(--color-coral-dark) shadow-lg shadow-(--color-coral)/25 animate-float">
             <ImagePlus className="h-7 w-7 text-white" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[--color-navy] sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-(--color-navy) sm:text-3xl">
               SnapResize AI
             </h1>
-            <p className="text-[--color-navy-light] text-sm mt-0.5">{t('headerSubtitle')}</p>
+            <p className="text-(--color-navy-light) text-sm mt-0.5">{t('headerSubtitle')}</p>
           </div>
         </div>
 
@@ -30,7 +30,7 @@ export const Header = ({ lang = 'ja' }: HeaderProps) => {
             href="https://github.com/hyuraku/snapresize-ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="tag tag-navy hover:bg-[--color-navy] hover:text-white transition-colors"
+            className="tag tag-navy hover:bg-(--color-navy) hover:text-white transition-colors"
           >
             <Github className="w-3.5 h-3.5" />
             {t('badgeOpenSource')}
