@@ -41,8 +41,6 @@ HTMLCanvasElement.prototype.toBlob = vi.fn((callback) => {
 
 // Mock crypto.randomUUID
 if (typeof globalThis.crypto === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (globalThis as any).crypto = {};
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis.crypto as any).randomUUID = vi.fn(() => 'mock-uuid-1234-5678-9012-345678901234');
