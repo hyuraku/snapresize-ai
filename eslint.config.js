@@ -29,10 +29,6 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      // New in eslint-plugin-react-hooks v7's recommended set. It flags the
-      // existing derived-step useEffect in App.tsx. Disabled here to keep this
-      // dependency migration behavior-neutral; revisit the pattern separately.
-      'react-hooks/set-state-in-effect': 'off',
     },
   },
 

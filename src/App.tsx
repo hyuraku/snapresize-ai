@@ -31,22 +31,11 @@ function App() {
   // Show download button after processing is complete
   const showDownloadButton = processed.length > 0 && !isProcessing;
 
-  // Calculate current step
-  const [currentStep, setCurrentStep] = useState(1);
   const [downloadCompleted, setDownloadCompleted] = useState(false);
 
-  useEffect(() => {
-    if (downloadCompleted) {
-      setCurrentStep(4); // Step 3 completed after download
-    } else if (processed.length > 0) {
-      setCurrentStep(3);
-    } else if (files.length > 0) {
-      setCurrentStep(2);
-    } else {
-      setCurrentStep(1);
-      setDownloadCompleted(false);
-    }
-  }, [files.length, processed.length, downloadCompleted]);
+  // Current step is fully derived from the file/processing/download state.
+  // 1: awaiting upload, 2: files added, 3: processed, 4: downloaded.
+  const currentStep = downloadCompleted ? 4 : processed.length > 0 ? 3 : files.length > 0 ? 2 : 1;
 
   // Auto download when processing is complete
   useEffect(() => {
