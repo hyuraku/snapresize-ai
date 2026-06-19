@@ -13,20 +13,20 @@ const getStatusConfig = (status: ProcessingStatus, t: (key: string) => string) =
   const configs = {
     pending: {
       text: t('filePending'),
-      color: 'text-[--color-navy-light]',
-      bgColor: 'bg-[--color-sand]/30',
+      color: 'text-(--color-navy-light)',
+      bgColor: 'bg-(--color-sand)/30',
       icon: Clock,
     },
     processing: {
       text: t('fileProcessing'),
-      color: 'text-[--color-coral]',
-      bgColor: 'bg-[--color-coral]/5',
+      color: 'text-(--color-coral)',
+      bgColor: 'bg-(--color-coral)/5',
       icon: Loader2,
     },
     completed: {
       text: t('fileCompleted'),
-      color: 'text-[--color-sage]',
-      bgColor: 'bg-[--color-sage]/5',
+      color: 'text-(--color-sage)',
+      bgColor: 'bg-(--color-sage)/5',
       icon: CheckCircle,
     },
     failed: {
@@ -62,15 +62,15 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
         return (
           <div
             key={file.id}
-            className={`flex items-center justify-between rounded-xl border border-[--color-sand] px-4 py-3 transition-all ${config.bgColor}`}
+            className={`flex items-center justify-between rounded-xl border border-(--color-sand) px-4 py-3 transition-all ${config.bgColor}`}
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-lg bg-white border border-[--color-sand] flex items-center justify-center flex-shrink-0">
-                <Image className="w-5 h-5 text-[--color-navy-light]" />
+              <div className="w-10 h-10 rounded-lg bg-white border border-(--color-sand) flex items-center justify-center flex-shrink-0">
+                <Image className="w-5 h-5 text-(--color-navy-light)" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-[--color-navy] text-sm truncate">{file.name}</p>
-                <p className="text-xs text-[--color-navy-light]">{formatBytes(file.size)}</p>
+                <p className="font-medium text-(--color-navy) text-sm truncate">{file.name}</p>
+                <p className="text-xs text-(--color-navy-light)">{formatBytes(file.size)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 ml-3">
@@ -83,7 +83,7 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
               {isCompleted && processedIndex >= 0 && (
                 <button
                   onClick={() => downloadSingle(processedIndex)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[--color-sage] text-white text-xs font-medium hover:bg-[--color-sage]/90 transition-all hover:shadow-md"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--color-sage) text-white text-xs font-medium hover:bg-(--color-sage)/90 transition-all hover:shadow-md"
                   aria-label={`${file.name}をダウンロード`}
                 >
                   <Download className="w-3.5 h-3.5" />

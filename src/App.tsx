@@ -107,15 +107,15 @@ function App() {
           <div className="glass-card rounded-3xl p-6 sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
               <div>
-                <p className="text-xl font-semibold text-[--color-navy]">{getStatusMessage()}</p>
-                <p className="text-sm text-[--color-navy-light] mt-1">{t('statusSubtitle')}</p>
+                <p className="text-xl font-semibold text-(--color-navy)">{getStatusMessage()}</p>
+                <p className="text-sm text-(--color-navy-light) mt-1">{t('statusSubtitle')}</p>
               </div>
               <div className="flex items-center gap-3">
                 {showDownloadButton && (
                   <button
                     onClick={downloadAll}
                     disabled={isDownloading}
-                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-[--color-sage] text-white font-semibold shadow-lg shadow-[--color-sage]/30 hover:shadow-xl hover:shadow-[--color-sage]/40 hover:-translate-y-0.5 transition-all animate-pulse-soft"
+                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-(--color-sage) text-white font-semibold shadow-lg shadow-(--color-sage)/30 hover:shadow-xl hover:shadow-(--color-sage)/40 hover:-translate-y-0.5 transition-all animate-pulse-soft"
                     aria-label={downloadCompleted ? t('btnRedownload') : t('btnDownloadAll')}
                   >
                     <Download className="w-5 h-5" />

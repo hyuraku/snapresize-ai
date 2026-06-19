@@ -10,21 +10,21 @@ interface ProcessingQueueProps {
 const getStatusConfig = (status: ProcessingStatus) => {
   const configs = {
     pending: {
-      color: 'text-[--color-navy-light]',
-      bg: 'bg-[--color-sand]',
-      progressBg: 'bg-[--color-sand]',
+      color: 'text-(--color-navy-light)',
+      bg: 'bg-(--color-sand)',
+      progressBg: 'bg-(--color-sand)',
       icon: Image,
     },
     processing: {
-      color: 'text-[--color-coral]',
-      bg: 'bg-[--color-coral]/10',
-      progressBg: 'bg-gradient-to-r from-[--color-coral] to-[--color-coral-light]',
+      color: 'text-(--color-coral)',
+      bg: 'bg-(--color-coral)/10',
+      progressBg: 'bg-gradient-to-r from-(--color-coral) to-(--color-coral-light)',
       icon: Loader2,
     },
     completed: {
-      color: 'text-[--color-sage]',
-      bg: 'bg-[--color-sage]/10',
-      progressBg: 'bg-[--color-sage]',
+      color: 'text-(--color-sage)',
+      bg: 'bg-(--color-sage)/10',
+      progressBg: 'bg-(--color-sage)',
       icon: CheckCircle,
     },
     failed: {
@@ -47,12 +47,12 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
       <div className="glass-card rounded-2xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[--color-navy]/5">
-              <Image className="w-5 h-5 text-[--color-navy]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--color-navy)/5">
+              <Image className="w-5 h-5 text-(--color-navy)" />
             </div>
-            <h2 className="text-lg font-bold text-[--color-navy]">{t('queueTitle')}</h2>
+            <h2 className="text-lg font-bold text-(--color-navy)">{t('queueTitle')}</h2>
           </div>
-          <span className="text-sm font-medium text-[--color-navy-light] bg-[--color-sand]/50 px-3 py-1 rounded-full">
+          <span className="text-sm font-medium text-(--color-navy-light) bg-(--color-sand)/50 px-3 py-1 rounded-full">
             {files.length}
             {unit}
           </span>
@@ -60,10 +60,10 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
         <div className="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1">
           {files.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[--color-sand]/50 flex items-center justify-center mb-4">
-                <Image className="w-8 h-8 text-[--color-navy-light]/40" />
+              <div className="w-16 h-16 rounded-2xl bg-(--color-sand)/50 flex items-center justify-center mb-4">
+                <Image className="w-8 h-8 text-(--color-navy-light)/40" />
               </div>
-              <p className="text-[--color-navy-light]">{t('queueEmpty')}</p>
+              <p className="text-(--color-navy-light)">{t('queueEmpty')}</p>
             </div>
           ) : (
             files.map((file) => {
@@ -73,14 +73,14 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
               return (
                 <div
                   key={file.id}
-                  className={`rounded-xl border border-[--color-sand] p-4 transition-all ${config.bg}`}
+                  className={`rounded-xl border border-(--color-sand) p-4 transition-all ${config.bg}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <IconComponent
                         className={`w-4 h-4 flex-shrink-0 ${config.color} ${file.status === 'processing' ? 'animate-spin' : ''}`}
                       />
-                      <span className="text-sm font-medium text-[--color-navy] truncate">
+                      <span className="text-sm font-medium text-(--color-navy) truncate">
                         {file.name}
                       </span>
                     </div>
