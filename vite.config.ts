@@ -3,12 +3,13 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // vendor チャンクの割り当て。パッケージ名 -> チャンク名。
+// ここに載せるのは「更新頻度が低く、アプリコードと別に長期キャッシュさせたいもの」に限る。
+// comlink / idb は dependencies に残っているが src から import されていないため、
+// エントリを置いても 0 バイトの空チャンクになるだけなので載せていない。
 const VENDOR_CHUNKS: Record<string, string> = {
   react: 'react-vendor',
   'react-dom': 'react-vendor',
   scheduler: 'react-vendor', // react-dom の実行時依存。react-vendor から切り離さない
-  comlink: 'worker-vendor',
-  idb: 'storage-vendor',
   jszip: 'zip-vendor',
   'file-saver': 'zip-vendor'
 };
@@ -149,8 +150,9 @@ export default defineConfig({
   },
 
   // Optimize dependencies
+  // src から import されていない comlink / idb は事前バンドルしても効果がないため除外
   optimizeDeps: {
-    include: ['react', 'react-dom', 'zustand', 'comlink', 'idb', 'jszip', 'file-saver']
+    include: ['react', 'react-dom', 'zustand', 'jszip', 'file-saver']
   },
 
   // Server configuration
