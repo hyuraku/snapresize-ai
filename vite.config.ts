@@ -2,6 +2,27 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// vendor チャンクの割り当て。パッケージ名 -> チャンク名。
+const VENDOR_CHUNKS: Record<string, string> = {
+  react: 'react-vendor',
+  'react-dom': 'react-vendor',
+  scheduler: 'react-vendor', // react-dom の実行時依存。react-vendor から切り離さない
+  comlink: 'worker-vendor',
+  idb: 'storage-vendor',
+  jszip: 'zip-vendor',
+  'file-saver': 'zip-vendor'
+};
+
+// manualChunks はオブジェクト形式もサポートされていたが、vite 8 が採用する rolldown は
+// 関数形式のみを受け付ける（オブジェクトを渡すと "manualChunks is not a function" で失敗）。
+// 関数形式は Rollup でも有効なので、vite 7 / 8 のどちらでも同じ結果になる。
+const manualChunks = (id: string): string | undefined => {
+  const match = /node_modules\/(?:(@[^/]+)\/)?([^/]+)/.exec(id);
+  if (!match) return undefined;
+  const pkg = match[1] ? `${match[1]}/${match[2]}` : match[2];
+  return pkg ? VENDOR_CHUNKS[pkg] : undefined;
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   // GitHub Pages 用のベースパス設定
@@ -112,12 +133,7 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'worker-vendor': ['comlink'],
-          'storage-vendor': ['idb'],
-          'zip-vendor': ['jszip', 'file-saver']
-        }
+        manualChunks
       }
     },
     // Enable source maps for debugging
