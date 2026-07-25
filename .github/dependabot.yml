@@ -9,6 +9,22 @@ updates:
       interval: 'weekly'
     # 同時に開く PR の上限
     open-pull-requests-limit: 10
+    # peer 依存で連動するパッケージを 1 つの PR にまとめる
+    groups:
+      # vite 本体とプラグイン群は peer 依存で世代が固定される。
+      # 例: @vitejs/plugin-react 6 は peer に vite ^8 を要求するため、
+      # vite 7 のまま plugin-react だけ上げる PR は npm ci が ERESOLVE で必ず落ちる。
+      # major だけをグループ化することで、minor / patch は従来どおり
+      # 個別 PR として自動マージ対象のまま残す。
+      vite:
+        patterns:
+          - 'vite'
+          - '@vitejs/*'
+          - 'vite-plugin-*'
+          - 'vitest'
+          - '@vitest/*'
+        update-types:
+          - 'major'
     # 自動マージワークフローで判別しやすいようにラベルを付与
     labels:
       - 'dependencies'

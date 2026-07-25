@@ -1,5 +1,6 @@
-import { ImagePlus, Github } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { getTranslation } from '../constants/translations';
+import { GithubIcon } from './icons/GithubIcon';
 
 interface HeaderProps {
   lang?: 'ja' | 'en';
@@ -32,7 +33,7 @@ export const Header = ({ lang = 'ja' }: HeaderProps) => {
             rel="noopener noreferrer"
             className="tag tag-navy hover:bg-(--color-navy) hover:text-white transition-colors"
           >
-            <Github className="w-3.5 h-3.5" />
+            <GithubIcon className="w-3.5 h-3.5" />
             {t('badgeOpenSource')}
           </a>
           <span className="tag tag-coral">
