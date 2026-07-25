@@ -25,6 +25,24 @@ updates:
           - '@vitest/*'
         update-types:
           - 'major'
+      # typescript-eslint は TypeScript のコンパイラ API を直接使うため、
+      # peer で TypeScript の世代が固定される。vite 群と同じ理由で major をまとめる。
+      typescript:
+        patterns:
+          - 'typescript'
+          - 'typescript-eslint'
+          - '@typescript-eslint/*'
+        update-types:
+          - 'major'
+    ignore:
+      # TypeScript 7 は Go への移植版 (tsgo) で、typescript-eslint がまだ対応していない。
+      # 8.65.0 と canary 8.65.1-alpha.7 の peer はいずれも
+      # typescript ">=4.8.4 <6.1.0" のため、TS 7 では npm ci が ERESOLVE で落ちる
+      # (PR #44 がこの状態だった)。
+      # typescript-eslint が対応版を出したら、この ignore を外す。
+      - dependency-name: 'typescript'
+        versions:
+          - '>= 7'
     # 自動マージワークフローで判別しやすいようにラベルを付与
     labels:
       - 'dependencies'
