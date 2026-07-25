@@ -1,0 +1,54 @@
+# PR とマージ後の main で、依存解決・型・Lint・ビルド・テストを検証するワークフロー
+#
+# 目的:
+#   - マージ前に破壊的変更を検出する
+#   - 特に npm ci による peer 依存の整合性チェック
+#     （lock ファイルが作れても解決できない更新はここで落ちる）
+name: CI
+
+on:
+  # すべての PR で実行（Dependabot の PR を含む）
+  pull_request:
+  # main への push でも実行（マージ後の最終確認）
+  push:
+    branches: [main]
+
+# 同じ ref で新しい push があれば、実行中の古い run を止める
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# チェックアウトとログ出力にしか使わないため読み取りのみ
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # npm ci は lock ファイルと peer 依存の整合性を検証する。
+      # 「lock は生成できるが peer 依存が解決できない」更新はここで ERESOLVE として落ちる。
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npx vitest run
