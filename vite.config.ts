@@ -3,9 +3,16 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // vendor チャンクの割り当て。パッケージ名 -> チャンク名。
-// ここに載せるのは「更新頻度が低く、アプリコードと別に長期キャッシュさせたいもの」に限る。
-// comlink / idb は dependencies に残っているが src から import されていないため、
-// エントリを置いても 0 バイトの空チャンクになるだけなので載せていない。
+// ここに載せるのは「十分大きく」かつ「アプリコードと変更頻度が明確に違う」ものに限る。
+// チャンクを分けると gzip の辞書も分断されるため、小さいものを切り出すと総量は増える。
+//
+// 測定して除外したもの:
+//   lucide-react … tree-shaking 後 gzip 2.76 kB。分割すると gzip 合計が
+//                   17.21 kB -> 17.74 kB に増える。アイコンは増える予定がなく、
+//                   デプロイの主因がライブラリ更新のため分割が効く場面もほぼ無い。
+//   zustand      … gzip 0.40 kB。独立チャンクにする水準ではない。
+//   comlink, idb … dependencies に残っているが src から import されていない。
+//                   エントリを置いても 0 バイトの空チャンクになるだけ。
 const VENDOR_CHUNKS: Record<string, string> = {
   react: 'react-vendor',
   'react-dom': 'react-vendor',
