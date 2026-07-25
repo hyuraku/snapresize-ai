@@ -83,7 +83,15 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@huggingface\/transformers/,
+            // Transformers.js が ONNX Runtime の WASM アセット(.wasm / ファクトリ .mjs)を
+            // 取得する jsdelivr のパス。バージョンによって配置元が違うため両方に一致させる:
+            //   v3: cdn.jsdelivr.net/npm/@huggingface/transformers@<ver>/dist/
+            //   v4: cdn.jsdelivr.net/npm/onnxruntime-web@<ver>/dist/
+            // (いずれも src/backends/onnx.js の ONNX_ENV.wasm.wasmPaths 既定値)
+            // なお v4 は env.useWasmCache により自身でも Cache API に保存するため、
+            // このルールは SW レベルのフォールバックとして働く。
+            urlPattern:
+              /^https:\/\/cdn\.jsdelivr\.net\/npm\/(?:@huggingface\/transformers|onnxruntime-web)/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'snapresize-ai-models',
