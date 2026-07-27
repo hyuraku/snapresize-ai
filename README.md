@@ -15,8 +15,8 @@ A fully browser-based AI image processing tool. Transform images for multiple so
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **AI/ML**: Transformers.js (WebGPU/WASM)
+- **Frontend**: React 19 + TypeScript + Vite
+- **AI/ML**: Transformers.js v4 (WebGPU/WASM)
 - **State**: Zustand
 - **UI**: Tailwind CSS + Headless UI
 - **Workers**: Web Workers + OffscreenCanvas
@@ -63,16 +63,16 @@ npm run test:e2e
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| React | 19.2.3 | UI Framework |
-| TypeScript | 5.6.0 | Type Safety |
-| Vite | 7.2.6 | Build Tool |
-| Zustand | 5.0.9 | State Management |
-| Transformers.js | 3.8.0 | AI/ML (Background Removal) |
-| Tailwind CSS | 3.4.0 | Styling |
+| React | 19.2.8 | UI Framework |
+| TypeScript | 6.0.3 | Type Safety |
+| Vite | 8.1.5 | Build Tool |
+| Zustand | 5.0.14 | State Management |
+| Transformers.js | 4.2.0 | AI/ML (Background Removal) |
+| Tailwind CSS | 4.3.3 | Styling |
 | JSZip | 3.10.1 | ZIP Export |
 | Comlink | 4.4.1 | Worker Communication |
 | idb | 8.0.0 | IndexedDB Wrapper |
-| Lucide React | 0.561.0 | Icon Library |
+| Lucide React | 1.21.0 | Icon Library |
 | File Saver | 2.0.5 | File Download |
 
 ## SNS Format Support
@@ -99,23 +99,38 @@ npm run test:e2e
 
 ### Key Risks and Mitigations
 
-1. **177MB Model Download** (HIGH)
-   - Progressive loading
-   - Cache Storage persistence
-   - Demo mode (lightweight 5MB model)
-   - CDN usage (jsDelivr, Brotli compression)
+1. **Model Download** (HIGH)
+   - Quantization selected per environment (see table below)
+   - Progressive loading with download progress
+   - Cache Storage persistence (model weights)
+   - Weights are fetched from the Hugging Face Hub (Brotli compression)
 
-2. **WebGPU Unsupported Browsers** (MEDIUM-HIGH)
+   | Environment | dtype | Approx. size |
+   |---|---|---|
+   | WebGPU with `shader-f16` | fp16 | 88MB |
+   | WebGPU without `shader-f16` | fp32 | 176MB |
+   | WASM fallback | q8 | 44MB |
+
+   Weights for a dtype that is no longer in use are deleted from Cache Storage after a
+   successful model load, so switching dtype does not leave stale files behind.
+
+2. **ONNX Runtime WASM Assets** (MEDIUM)
+   - The ONNX Runtime runtime (22.5MB) is bundled and served from our own origin
+   - `env.backends.onnx.wasm.wasmPaths` is pinned to those assets, so nothing is fetched
+     from the jsdelivr CDN at runtime. This keeps the app self-contained and avoids
+     downloading the same binary twice (once via PWA precache, once from the CDN)
+
+3. **WebGPU Unsupported Browsers** (MEDIUM-HIGH)
    - Auto-detection with WASM fallback
    - User warning display
    - Batch size adjustment (WebGPU: 5 images, WASM: 2 images)
 
-3. **Heavy Canvas API Processing** (HIGH)
+4. **Heavy Canvas API Processing** (HIGH)
    - Web Workers + OffscreenCanvas
    - Chunked processing (50ms delay)
    - Concurrency control (max 4 workers)
 
-4. **Memory Management** (MEDIUM-HIGH)
+5. **Memory Management** (MEDIUM-HIGH)
    - Auto cleanup at 800MB threshold
    - Blob URL tracking and release
    - File size limit (50MB)
@@ -187,10 +202,14 @@ npm run test:coverage
 | Chrome 113+ | Full (WebGPU) | Recommended |
 | Edge 113+ | Full (WebGPU) | Recommended |
 | Opera 99+ | Full (WebGPU) | Recommended |
-| Safari 26+ | Full (WebGPU) | macOS/iOS |
-| Firefox 141+ | Partial (WASM) | Linux unsupported |
+| Safari 26+ | Full (WebGPU) | Enabled by default on macOS 26 / iOS 26 / iPadOS 26 / visionOS 26 |
+| Firefox 141+ | Full (WebGPU) | Windows. macOS ARM64 from Firefox 145. Linux planned for 2026 |
 
 **When WebGPU is unavailable**: WASM fallback (up to 100x slower)
+
+Support is decided by feature detection at runtime (`navigator.gpu` and `shader-f16`), never by
+user agent strings. The versions above are for reference only: the same browser version can
+still fall back to WASM depending on the OS, GPU, or user settings.
 
 ## Contributing
 

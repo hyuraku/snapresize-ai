@@ -30,13 +30,7 @@ export const useCapabilityDetection = (): UseCapabilityDetectionResult => {
         console.error('Capability detection failed:', error);
         if (mounted) {
           // エラー時はWASMにフォールバック
-          setCapabilityInfo({
-            backend: 'wasm',
-            isWebGPUAvailable: false,
-            adapterInfo: null,
-            recommendedChunkSize: 2,
-            estimatedSpeedMultiplier: 100,
-          });
+          setCapabilityInfo(capabilityDetector.getWASMFallback());
           setIsDetecting(false);
         }
       }
