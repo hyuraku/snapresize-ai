@@ -76,6 +76,7 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
         onDrop={handleDrop}
         onClick={handleClick}
         className="relative overflow-hidden rounded-2xl border-2 border-dashed border-(--color-sand) bg-gradient-to-br from-white to-(--color-cream) p-10 text-center transition-all duration-300 hover:border-(--color-coral)/50 hover:shadow-lg cursor-pointer group"
+        data-testid="dropZone"
       >
         {/* 装飾アイコン */}
         <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-40 transition-opacity">
@@ -106,6 +107,7 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
         multiple
         accept="image/png,image/jpeg,image/webp"
         onChange={handleFileChange}
+        data-testid="fileInput"
       />
     </div>
   );

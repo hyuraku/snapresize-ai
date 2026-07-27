@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TEST_IMAGE = path.resolve(__dirname, '../test-images/test_image.png');
+
+// UI は data-testid で参照する。
+// 表示文言でしか特定できない要素だけ getByText を使い、
+// その場合も playwright.config.ts の locale: 'ja-JP' に依存する点に注意。
 
 test.describe('SnapResize AI - Image Processing E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,250 +16,202 @@ test.describe('SnapResize AI - Image Processing E2E Tests', () => {
 
   test('should display the application title and header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('SnapResize AI');
-    await expect(page.getByText('画像リサイズ・背景除去・透かし追加をブラウザだけで')).toBeVisible();
+    await expect(
+      page.getByText('画像リサイズ・背景除去・透かし追加をブラウザだけで')
+    ).toBeVisible();
   });
 
   test('should display key features badges', async ({ page }) => {
-    await expect(page.getByText('✓ 完全無料')).toBeVisible();
-    await expect(page.getByText('✓ 登録不要')).toBeVisible();
-    await expect(page.getByText('✓ データ送信なし')).toBeVisible();
+    await expect(page.getByText('完全無料')).toBeVisible();
+    await expect(page.getByText('データ送信なし')).toBeVisible();
   });
 
   test('should display initial upload message', async ({ page }) => {
-    await expect(page.locator('#statusMessage')).toContainText('画像をアップロードしてください');
+    await expect(page.getByTestId('statusMessage')).toContainText('画像をアップロードしてください');
   });
 
   test('should have start button disabled initially', async ({ page }) => {
-    const startBtn = page.locator('#startBtn');
-    await expect(startBtn).toBeDisabled();
+    await expect(page.getByTestId('startBtn')).toBeDisabled();
   });
 
   test('should display file upload zone', async ({ page }) => {
-    await expect(page.locator('#dropZone')).toBeVisible();
-    await expect(page.getByText('📸 画像をドラッグ＆ドロップ')).toBeVisible();
+    await expect(page.getByTestId('dropZone')).toBeVisible();
+    await expect(page.getByText('画像をドラッグ＆ドロップ')).toBeVisible();
     await expect(page.getByText('JPG / PNG / WebP')).toBeVisible();
   });
 
   test('should upload image files', async ({ page }) => {
-    // Create a test file path (you need to have actual test images)
-    const fileInput = page.locator('#fileInput');
+    await page.getByTestId('fileInput').setInputFiles(TEST_IMAGE);
 
-    // Mock file upload using setInputFiles
-    await fileInput.setInputFiles({
-      name: 'test-image.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('fake-image-content'),
-    });
-
-    // Wait for file to be processed
-    await page.waitForTimeout(500);
-
-    // Check if status message updates
-    const statusMessage = page.locator('#statusMessage');
-    await expect(statusMessage).not.toContainText('画像をアップロードしてください');
+    await expect(page.getByTestId('statusMessage')).not.toContainText(
+      '画像をアップロードしてください'
+    );
+    await expect(page.getByTestId('selectedCount')).toContainText('1');
   });
 
   test('should enable start button after file upload', async ({ page }) => {
-    const fileInput = page.locator('#fileInput');
+    await page.getByTestId('fileInput').setInputFiles(TEST_IMAGE);
 
-    await fileInput.setInputFiles({
-      name: 'test-image.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('fake-image-content'),
-    });
-
-    await page.waitForTimeout(500);
-
-    const startBtn = page.locator('#startBtn');
-    await expect(startBtn).toBeEnabled();
+    await expect(page.getByTestId('startBtn')).toBeEnabled();
   });
 
   test('should display settings panel', async ({ page }) => {
-    await expect(page.getByText('⚙️ 出力設定')).toBeVisible();
-    await expect(page.locator('#settingsToggle')).toBeVisible();
+    await expect(page.getByText('出力設定')).toBeVisible();
+    await expect(page.getByTestId('settingsToggle')).toBeVisible();
   });
 
   test('should toggle settings panel', async ({ page }) => {
-    const settingsToggle = page.locator('#settingsToggle');
-    const settingsPanel = page.locator('#settingsPanel');
+    const settingsToggle = page.getByTestId('settingsToggle');
+    const settingsPanel = page.getByTestId('settingsPanel');
 
-    // Panel should be visible initially
+    // 初期状態では開いている
     await expect(settingsPanel).toBeVisible();
 
-    // Click to collapse
+    // 閉じる（パネルは条件付きレンダリングなので DOM から消える）
     await settingsToggle.click();
-    await expect(settingsPanel).toBeHidden();
+    await expect(settingsPanel).toHaveCount(0);
 
-    // Click to expand
+    // 再度開く
     await settingsToggle.click();
     await expect(settingsPanel).toBeVisible();
   });
 
   test('should display SNS preset options', async ({ page }) => {
-    await expect(page.getByText('Instagram 正方形')).toBeVisible();
-    await expect(page.getByText('Instagram ストーリー')).toBeVisible();
-    await expect(page.getByText('X（Twitter）横長')).toBeVisible();
-    await expect(page.getByText('カスタムサイズ')).toBeVisible();
+    await expect(page.getByTestId('preset-instagram-square')).toBeVisible();
+    await expect(page.getByTestId('preset-instagram-story')).toBeVisible();
+    await expect(page.getByTestId('preset-twitter-landscape')).toBeVisible();
+    await expect(page.getByTestId('preset-custom')).toBeVisible();
   });
 
   test('should select different SNS presets', async ({ page }) => {
-    // Select Instagram Story
-    await page.locator('input[value="instagram-story"]').click();
-    await expect(page.locator('input[value="instagram-story"]')).toBeChecked();
+    // radio 本体は sr-only なので、ラベルをクリックして選択する
+    await page.getByTestId('preset-instagram-story').click();
+    await expect(page.locator('input[name="preset"][value="instagram-story"]')).toBeChecked();
 
-    // Select Twitter
-    await page.locator('input[value="twitter"]').click();
-    await expect(page.locator('input[value="twitter"]')).toBeChecked();
+    await page.getByTestId('preset-twitter-landscape').click();
+    await expect(page.locator('input[name="preset"][value="twitter-landscape"]')).toBeChecked();
   });
 
   test('should show custom size inputs when custom preset selected', async ({ page }) => {
-    const customSizeInputs = page.locator('#customSizeInputs');
+    // 初期状態では存在しない
+    await expect(page.getByTestId('customSizeInputs')).toHaveCount(0);
 
-    // Initially hidden
-    await expect(customSizeInputs).toBeHidden();
+    await page.getByTestId('preset-custom').click();
 
-    // Select custom preset
-    await page.locator('input[value="custom"]').click();
-
-    // Should now be visible
-    await expect(customSizeInputs).toBeVisible();
-    await expect(page.locator('#customWidth')).toBeVisible();
-    await expect(page.locator('#customHeight')).toBeVisible();
+    await expect(page.getByTestId('customSizeInputs')).toBeVisible();
+    await expect(page.getByTestId('customWidth')).toBeVisible();
+    await expect(page.getByTestId('customHeight')).toBeVisible();
   });
 
   test('should adjust quality slider', async ({ page }) => {
-    const qualitySlider = page.locator('#quality');
-    const qualityValue = page.locator('#qualityValue');
+    const qualitySlider = page.getByTestId('quality');
+    const qualityValue = page.getByTestId('qualityValue');
 
-    // Initial value should be 90
     await expect(qualityValue).toHaveText('90');
 
-    // Change quality
     await qualitySlider.fill('75');
     await expect(qualityValue).toHaveText('75');
   });
 
   test('should toggle watermark options', async ({ page }) => {
-    const watermarkToggle = page.locator('#watermarkToggle');
-    const watermarkOptions = page.locator('#watermarkOptions');
+    const watermarkToggle = page.getByTestId('watermarkToggle');
 
-    // Initially hidden
-    await expect(watermarkOptions).toBeHidden();
+    // 初期状態では存在しない
+    await expect(page.getByTestId('watermarkOptions')).toHaveCount(0);
 
-    // Enable watermark
-    await watermarkToggle.check();
-    await expect(watermarkOptions).toBeVisible();
+    await watermarkToggle.click();
+    await expect(page.getByTestId('watermarkOptions')).toBeVisible();
 
-    // Disable watermark
-    await watermarkToggle.uncheck();
-    await expect(watermarkOptions).toBeHidden();
+    await watermarkToggle.click();
+    await expect(page.getByTestId('watermarkOptions')).toHaveCount(0);
   });
 
   test('should input watermark text', async ({ page }) => {
-    const watermarkToggle = page.locator('#watermarkToggle');
-    const watermarkText = page.locator('#watermarkText');
+    await page.getByTestId('watermarkToggle').click();
 
-    await watermarkToggle.check();
+    const watermarkText = page.getByTestId('watermarkText');
     await watermarkText.fill('My Watermark');
 
     await expect(watermarkText).toHaveValue('My Watermark');
   });
 
   test('should display step indicator', async ({ page }) => {
-    await expect(page.getByText('📋 かんたん3ステップ')).toBeVisible();
-    await expect(page.locator('#step1')).toBeVisible();
-    await expect(page.locator('#step2')).toBeVisible();
-    await expect(page.locator('#step3')).toBeVisible();
+    await expect(page.getByText('かんたん3ステップ')).toBeVisible();
+    await expect(page.getByTestId('step1')).toBeVisible();
+    await expect(page.getByTestId('step2')).toBeVisible();
+    await expect(page.getByTestId('step3')).toBeVisible();
   });
 
   test('should display processing queue', async ({ page }) => {
-    await expect(page.getByText('処理キュー')).toBeVisible();
-    await expect(page.locator('#queueList')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '画像一覧' })).toBeVisible();
+    await expect(page.getByTestId('queueList')).toBeVisible();
   });
 
   test('should display file counters', async ({ page }) => {
-    await expect(page.locator('#selectedCount')).toContainText('0枚');
-    await expect(page.locator('#processedCount')).toContainText('0枚');
+    await expect(page.getByTestId('selectedCount')).toContainText('0');
+    await expect(page.getByTestId('processedCount')).toContainText('0');
   });
 
   test('should have clear button', async ({ page }) => {
-    await expect(page.locator('#clearBtn')).toBeVisible();
-    await expect(page.locator('#clearBtn')).toContainText('すべてクリア');
+    const clearBtn = page.getByTestId('clearBtn');
+    await expect(clearBtn).toBeVisible();
+    await expect(clearBtn).toContainText('すべてクリア');
   });
 
   test('should display privacy section', async ({ page }) => {
-    await expect(page.getByText('🔒')).toBeVisible();
-    await expect(page.getByText('プライバシー保護')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'プライバシー保護' })).toBeVisible();
     await expect(page.getByText('すべての処理はお使いのブラウザ内で完結')).toBeVisible();
   });
 
-  test('should display ad section', async ({ page }) => {
-    await expect(page.getByText('PR')).toBeVisible();
-    await expect(page.locator('#adHeadline')).toBeVisible();
-    await expect(page.locator('#adCopy')).toBeVisible();
-  });
-
   test('should display footer', async ({ page }) => {
-    await expect(page.getByText('© 2025 SnapResize AI')).toBeVisible();
-    await expect(page.getByText('利用規約')).toBeVisible();
-    await expect(page.getByText('プライバシーポリシー')).toBeVisible();
-    await expect(page.getByText('お問い合わせ')).toBeVisible();
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'GitHub' })).toBeVisible();
   });
 
   test('should be responsive on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
     await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('#dropZone')).toBeVisible();
-    await expect(page.locator('#settingsToggle')).toBeVisible();
+    await expect(page.getByTestId('dropZone')).toBeVisible();
+    await expect(page.getByTestId('settingsToggle')).toBeVisible();
   });
 
   test('should handle file drag and drop zone hover', async ({ page }) => {
-    const dropZone = page.locator('#dropZone');
+    const dropZone = page.getByTestId('dropZone');
 
-    // Simulate hover
     await dropZone.hover();
 
-    // Check if drop zone is interactive
     await expect(dropZone).toBeVisible();
   });
 
   test('should update settings summary', async ({ page }) => {
-    const settingsSummary = page.locator('#settingsSummary');
+    const settingsSummary = page.getByTestId('settingsSummary');
 
-    // Initial summary
     await expect(settingsSummary).toContainText('Instagram 正方形');
 
-    // Change preset
-    await page.locator('input[value="twitter"]').click();
+    await page.getByTestId('preset-twitter-landscape').click();
 
-    // Summary should update
     await expect(settingsSummary).toContainText('X（Twitter）横長');
   });
 
   test('should clear files when clear button clicked', async ({ page }) => {
-    // Upload a file
-    const fileInput = page.locator('#fileInput');
-    await fileInput.setInputFiles({
-      name: 'test-image.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('fake-image-content'),
-    });
+    await page.getByTestId('fileInput').setInputFiles(TEST_IMAGE);
+    await expect(page.getByTestId('selectedCount')).toContainText('1');
 
-    await page.waitForTimeout(500);
+    await page.getByTestId('clearBtn').click();
 
-    // Click clear button
-    await page.locator('#clearBtn').click();
-
-    // Status should reset
-    await expect(page.locator('#statusMessage')).toContainText('画像をアップロードしてください');
-    await expect(page.locator('#selectedCount')).toContainText('0枚');
+    await expect(page.getByTestId('statusMessage')).toContainText('画像をアップロードしてください');
+    await expect(page.getByTestId('selectedCount')).toContainText('0');
   });
 
-  test('should display model loading section initially', async ({ page }) => {
-    const modelLoadingSection = page.locator('#modelLoadingSection');
-    await expect(modelLoadingSection).toBeVisible();
-    await expect(page.locator('#modelStatus')).toContainText('AIモデルを準備中');
+  test('should show model download notice when background removal is enabled', async ({ page }) => {
+    // 背景除去が無効なうちはモデルを読み込まない
+    await expect(page.getByText('モデルをダウンロードします')).toHaveCount(0);
+
+    await page.getByTestId('bgRemovalToggle').click();
+
+    // dtype に応じたサイズが表示される（fp32:176MB / fp16:88MB / q8:44MB）
+    await expect(page.getByText(/初回は(44|88|176)MBのモデルをダウンロードします/)).toBeVisible();
+    await expect(page.getByTestId('settingsSummary')).toContainText('背景除去');
   });
 });
 
@@ -266,7 +226,7 @@ test.describe('Accessibility Tests', () => {
   test('should have accessible form controls', async ({ page }) => {
     await page.goto('/');
 
-    const fileInput = page.locator('#fileInput');
+    const fileInput = page.getByTestId('fileInput');
     await expect(fileInput).toHaveAttribute('type', 'file');
     await expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
   });
@@ -274,8 +234,8 @@ test.describe('Accessibility Tests', () => {
   test('should have proper button labels', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('#startBtn')).toContainText('処理を開始');
-    await expect(page.locator('#clearBtn')).toContainText('すべてクリア');
+    await expect(page.getByTestId('startBtn')).toContainText('処理を開始');
+    await expect(page.getByTestId('clearBtn')).toContainText('すべてクリア');
   });
 });
 

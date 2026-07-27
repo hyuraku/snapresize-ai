@@ -38,6 +38,7 @@ export const Sidebar = ({ lang = 'ja', currentStep }: SidebarProps) => {
                   isCurrent ? 'bg-(--color-coral)/5' : ''
                 }`}
                 style={{ animationDelay: `${idx * 100}ms` }}
+                data-testid={`step${step.num}`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all ${
@@ -79,14 +80,14 @@ export const Sidebar = ({ lang = 'ja', currentStep }: SidebarProps) => {
         <dl className="mt-3 space-y-3">
           <div className="flex items-center justify-between p-2 rounded-lg bg-(--color-cream-dark)/50">
             <dt className="text-sm text-(--color-navy-light)">{t('statusSelected')}</dt>
-            <dd className="font-bold text-(--color-navy) text-lg">
+            <dd className="font-bold text-(--color-navy) text-lg" data-testid="selectedCount">
               {files.length}
               <span className="text-sm font-normal text-(--color-navy-light) ml-0.5">{unit}</span>
             </dd>
           </div>
           <div className="flex items-center justify-between p-2 rounded-lg bg-(--color-sage)/5">
             <dt className="text-sm text-(--color-navy-light)">{t('statusCompleted')}</dt>
-            <dd className="font-bold text-(--color-sage) text-lg">
+            <dd className="font-bold text-(--color-sage) text-lg" data-testid="processedCount">
               {processed.length}
               <span className="text-sm font-normal text-(--color-sage)/70 ml-0.5">{unit}</span>
             </dd>
@@ -95,6 +96,7 @@ export const Sidebar = ({ lang = 'ja', currentStep }: SidebarProps) => {
         <button
           onClick={clearFiles}
           className="mt-5 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-(--color-sand) px-4 py-2.5 text-sm font-medium text-(--color-navy-light) transition-all hover:bg-(--color-sand) hover:text-(--color-navy)"
+          data-testid="clearBtn"
         >
           <Trash2 className="w-4 h-4" />
           {t('btnClear')}

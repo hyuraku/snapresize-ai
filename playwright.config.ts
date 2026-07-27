@@ -12,6 +12,9 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // UI は detectLanguage() でブラウザ言語から日本語/英語を切り替える。
+    // 既定のロケール(en-US)のままだと英語UIになり、日本語を期待するアサーションが落ちる。
+    locale: 'ja-JP',
   },
 
   projects: [
