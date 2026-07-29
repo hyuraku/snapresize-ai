@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useImageStore } from '../store/imageStore';
+import { useCapabilityDetection } from '../hooks/useCapabilityDetection';
+import { capabilityDetector } from '../lib/capabilityDetector';
 import { getTranslation } from '../constants/translations';
 import { SNS_PRESETS, PRESET_GROUPS } from '../constants/presets';
 import type { SNSPresetKey, WatermarkPosition } from '../types';
@@ -20,6 +22,7 @@ interface SettingsPanelProps {
 export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
   const t = (key: string) => getTranslation(key, lang);
   const [isOpen, setIsOpen] = useState(true);
+  const { capabilityInfo } = useCapabilityDetection();
 
   const settings = useImageStore((state) => state.settings);
   const modelState = useImageStore((state) => state.modelState);
@@ -47,6 +50,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between text-left group"
+        data-testid="settingsToggle"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-(--color-coral) to-(--color-coral-dark) shadow-lg shadow-(--color-coral)/20">
@@ -54,7 +58,9 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-(--color-navy)">{t('settingsTitle')}</h2>
-            <p className="text-xs text-(--color-navy-light)">{getSummary()}</p>
+            <p className="text-xs text-(--color-navy-light)" data-testid="settingsSummary">
+              {getSummary()}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -71,7 +77,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
       </button>
 
       {isOpen && (
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6" data-testid="settingsPanel">
           {/* SNS Presets */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -86,6 +92,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                   return (
                     <label
                       key={presetKey}
+                      data-testid={`preset-${presetKey}`}
                       className={`relative flex cursor-pointer flex-col rounded-xl border-2 p-3 transition-all duration-200 ${
                         isSelected
                           ? 'border-(--color-coral) bg-(--color-coral)/5 shadow-md shadow-(--color-coral)/10'
@@ -122,7 +129,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
               )}
             </div>
             {settings.preset === 'custom' && (
-              <div className="flex gap-3 mt-3">
+              <div className="flex gap-3 mt-3" data-testid="customSizeInputs">
                 <div className="flex-1">
                   <label className="text-xs text-(--color-navy-light) mb-1 block font-medium">
                     Width (px)
@@ -136,6 +143,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                       setCustomSize(parseInt(e.target.value) || 1080, settings.customHeight)
                     }
                     className="input-field"
+                    data-testid="customWidth"
                   />
                 </div>
                 <div className="flex-1">
@@ -151,6 +159,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                       setCustomSize(settings.customWidth, parseInt(e.target.value) || 1080)
                     }
                     className="input-field"
+                    data-testid="customHeight"
                   />
                 </div>
               </div>
@@ -172,6 +181,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                   role="switch"
                   aria-checked={settings.enableBackgroundRemoval}
                   aria-label={t('bgRemovalToggle')}
+                  data-testid="bgRemovalToggle"
                   className={`toggle-switch ${settings.enableBackgroundRemoval ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -181,11 +191,14 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
               </label>
               {settings.enableBackgroundRemoval && (
                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  {t('bgRemovalNote')}
+                  {t('bgRemovalNote').replace(
+                    '{size}',
+                    capabilityDetector.getModelSizeLabel(capabilityInfo?.dtype)
+                  )}
                 </p>
               )}
               {modelState.status === 'loading' && (
-                <div className="space-y-2">
+                <div className="space-y-2" data-testid="modelStatus">
                   <div className="flex items-center gap-2 text-xs text-(--color-coral)">
                     <div className="h-2 w-2 rounded-full bg-(--color-coral) animate-pulse-soft" />
                     {modelState.message}
@@ -196,7 +209,10 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 </div>
               )}
               {modelState.status === 'ready' && (
-                <p className="text-xs text-(--color-sage) flex items-center gap-1.5 font-medium">
+                <p
+                  className="text-xs text-(--color-sage) flex items-center gap-1.5 font-medium"
+                  data-testid="modelReady"
+                >
                   <span className="h-2 w-2 rounded-full bg-(--color-sage)" />
                   {t('modelReady')}
                 </p>
@@ -219,6 +235,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                   role="switch"
                   aria-checked={settings.enableWatermark}
                   aria-label={t('watermarkToggle')}
+                  data-testid="watermarkToggle"
                   className={`toggle-switch ${settings.enableWatermark ? 'active' : ''}`}
                   style={
                     settings.enableWatermark
@@ -235,13 +252,14 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 />
               </label>
               {settings.enableWatermark && (
-                <div className="space-y-3">
+                <div className="space-y-3" data-testid="watermarkOptions">
                   <input
                     type="text"
                     value={settings.watermarkText}
                     onChange={(e) => setWatermark(true, e.target.value)}
                     placeholder={t('placeholderWatermark')}
                     className="input-field"
+                    data-testid="watermarkText"
                   />
                   <div className="grid grid-cols-3 gap-1.5">
                     {(
@@ -291,7 +309,12 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 <p className="text-sm font-bold text-(--color-navy)">{t('qualityLabel')}</p>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-(--color-coral)/10 to-(--color-sage)/10 px-4 py-1.5 border border-(--color-coral)/20">
-                <span className="text-2xl font-bold text-(--color-coral)">{settings.quality}</span>
+                <span
+                  className="text-2xl font-bold text-(--color-coral)"
+                  data-testid="qualityValue"
+                >
+                  {settings.quality}
+                </span>
                 <span className="text-sm text-(--color-navy-light)">%</span>
               </div>
             </div>
@@ -307,6 +330,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
                 aria-valuemax={100}
                 aria-valuenow={settings.quality}
                 aria-valuetext={`${settings.quality}%`}
+                data-testid="quality"
                 className="w-full h-3 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-(--color-coral) [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                 style={{
                   background: `linear-gradient(to right, var(--color-coral) 0%, var(--color-coral-light) ${((settings.quality - 60) / 40) * 100}%, var(--color-sand) ${((settings.quality - 60) / 40) * 100}%)`,

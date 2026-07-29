@@ -44,3 +44,7 @@ playwright/.cache/
 # PWA
 public/service-worker.js
 public/workbox-*.js
+
+# ローカル issue トラッカー（docs/agents/issue-tracker.md）
+# spec と issue は手元の作業メモとして扱い、リポジトリでは共有しない
+.scratch/

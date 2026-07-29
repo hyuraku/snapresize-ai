@@ -90,28 +90,10 @@ export default defineConfig({
               }
             }
           },
-          {
-            // Transformers.js が ONNX Runtime の WASM アセット(.wasm / ファクトリ .mjs)を
-            // 取得する jsdelivr のパス。バージョンによって配置元が違うため両方に一致させる:
-            //   v3: cdn.jsdelivr.net/npm/@huggingface/transformers@<ver>/dist/
-            //   v4: cdn.jsdelivr.net/npm/onnxruntime-web@<ver>/dist/
-            // (いずれも src/backends/onnx.js の ONNX_ENV.wasm.wasmPaths 既定値)
-            // なお v4 は env.useWasmCache により自身でも Cache API に保存するため、
-            // このルールは SW レベルのフォールバックとして働く。
-            urlPattern:
-              /^https:\/\/cdn\.jsdelivr\.net\/npm\/(?:@huggingface\/transformers|onnxruntime-web)/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'snapresize-ai-models',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
+          // NOTE: ONNX Runtime の WASM アセットに対する runtimeCaching ルールは置いていない。
+          // 既定では jsdelivr の CDN から取得されるが、backgroundRemoval.worker.ts で
+          // env.backends.onnx.wasm.wasmPaths を自オリジンの asset に固定しているため、
+          // 実行時に外部 CDN へ取りに行くことはなく、下の precache だけで完結する。
           {
             urlPattern: /^https:\/\/cdn\.huggingface\.co/,
             handler: 'CacheFirst',

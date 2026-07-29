@@ -57,7 +57,7 @@ export const ProcessingQueue = ({ lang = 'ja' }: ProcessingQueueProps) => {
             {unit}
           </span>
         </div>
-        <div className="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1">
+        <div className="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1" data-testid="queueList">
           {files.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-(--color-sand)/50 flex items-center justify-center mb-4">

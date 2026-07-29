@@ -2,7 +2,7 @@ import { AlertTriangle, HardDrive } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { memoryManager } from '../lib/memoryManager';
 import { getTranslation } from '../constants/translations';
-import type { Backend } from '../lib/capabilityDetector';
+import { capabilityDetector, type Backend } from '../lib/capabilityDetector';
 
 interface StatusIndicatorProps {
   backend: Backend | 'detecting';
@@ -65,15 +65,14 @@ export const WASMWarningBanner = ({ lang = 'ja' }: { lang?: 'ja' | 'en' }) => {
           <h3 className="font-semibold text-amber-200">{t('wasmWarningTitle')}</h3>
           <p className="mt-1 text-sm text-amber-300/80">{t('wasmWarningDesc')}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-200">
-              Chrome 113+
-            </span>
-            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-200">
-              Edge 113+
-            </span>
-            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-200">
-              Opera 99+
-            </span>
+            {capabilityDetector.getRecommendedBrowsers().map((browser) => (
+              <span
+                key={browser}
+                className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-200"
+              >
+                {browser}
+              </span>
+            ))}
           </div>
         </div>
       </div>

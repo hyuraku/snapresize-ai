@@ -96,7 +96,12 @@ function App() {
           <div className="glass-card rounded-3xl p-6 sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
               <div>
-                <p className="text-xl font-semibold text-(--color-navy)">{getStatusMessage()}</p>
+                <p
+                  className="text-xl font-semibold text-(--color-navy)"
+                  data-testid="statusMessage"
+                >
+                  {getStatusMessage()}
+                </p>
                 <p className="text-sm text-(--color-navy-light) mt-1">{t('statusSubtitle')}</p>
               </div>
               <div className="flex items-center gap-3">
@@ -115,6 +120,7 @@ function App() {
                   onClick={handleStart}
                   disabled={files.length === 0 || isProcessing}
                   className="btn-primary whitespace-nowrap"
+                  data-testid="startBtn"
                 >
                   {isProcessing ? t('btnProcessing') : t('btnStart')}
                 </button>

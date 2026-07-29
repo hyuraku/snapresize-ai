@@ -1,40 +1,52 @@
-// 背景除去 Web Worker (Transformers.js + RMBG-1.4)
+// 背景除去 Web Worker (Transformers.js v4 + RMBG-1.4)
 import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transformers';
+// ONNX Runtime のランタイム本体。Vite にバンドルさせ、自分のオリジンから配信する。
+// WebGPU を使う場合もカーネルの実体はこの wasm 側にあるため、必ず読み込まれる。
+// パスは onnxruntime-web の exports に定義された専用サブパス（dist/ は含めない）
+import ortWasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url';
+import ortMjsUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url';
+import { capabilityDetector, type ModelDtype } from '../lib/capabilityDetector';
+import { cleanupStaleModelCache } from '../lib/modelCacheCleaner';
 
 // Hugging Face Hub からモデルをダウンロードするように設定
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
+// ONNX Runtime の既定の wasmPaths は jsdelivr の CDN を指す。
+// 放置すると Vite がバンドルした同じ 22.5MB の wasm が PWA に precache されたまま使われず、
+// 実行時には CDN から同じものをもう一度取得することになる（合計 45MB）。
+// 自分のオリジンの asset に向けることで、precache 済みのファイルがそのまま使われ、
+// 外部 CDN への依存もなくなる。
+// wasm フラグが無い環境（ORT の構造変更など）では既定の CDN 解決に任せる
+if (env.backends.onnx.wasm) {
+  env.backends.onnx.wasm.wasmPaths = {
+    wasm: ortWasmUrl,
+    mjs: ortMjsUrl,
+  };
+}
+// 同一オリジンの asset は Service Worker が precache 済みなので、
+// Transformers.js 側で Cache Storage に二重保存する必要はない。
+env.useWasmCache = false;
+
 let model: Awaited<ReturnType<typeof AutoModel.from_pretrained>> | null = null;
 let processor: Awaited<ReturnType<typeof AutoProcessor.from_pretrained>> | null = null;
 let device: 'webgpu' | 'wasm' = 'wasm';
-
-// WebGPU サポートチェック
-const checkWebGPUSupport = async (): Promise<boolean> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const gpu = (navigator as any).gpu;
-  if (!gpu) return false;
-  try {
-    const adapter = await gpu.requestAdapter();
-    return adapter !== null;
-  } catch {
-    return false;
-  }
-};
+let dtype: ModelDtype = 'q8';
 
 // モデル初期化
 const initModel = async () => {
   try {
-    // WebGPU サポートチェック
-    const hasWebGPU = await checkWebGPUSupport();
-    device = hasWebGPU ? 'webgpu' : 'wasm';
+    // バックエンドと量子化形式を検出（メインスレッドと同じロジックを共有）
+    const capability = await capabilityDetector.detectBestBackend();
+    device = capability.backend;
+    dtype = capability.dtype;
 
     self.postMessage({
       type: 'progress',
       payload: {
         status: 'loading',
         progress: 0,
-        message: hasWebGPU
+        message: capability.isWebGPUAvailable
           ? 'WebGPUモードで初期化中...'
           : 'WASMモードで初期化中（処理が遅くなります）...',
         device,
@@ -46,6 +58,7 @@ const initModel = async () => {
     // モデルとプロセッサを初期化
     model = await AutoModel.from_pretrained(modelId, {
       device: device,
+      dtype: dtype,
       progress_callback: (progress: { status: string; progress?: number; file?: string }) => {
         if (progress.status === 'progress' && progress.progress !== undefined) {
           self.postMessage({
@@ -72,6 +85,10 @@ const initModel = async () => {
         device,
       },
     });
+
+    // ロードが成功してから、使わなくなった dtype の重みを捨てる。
+    // 失敗しても利用者には影響しないので待たずに走らせる。
+    void cleanupStaleModelCache(modelId, dtype);
   } catch (error) {
     self.postMessage({
       type: 'error',
