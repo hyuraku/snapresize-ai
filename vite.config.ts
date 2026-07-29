@@ -40,12 +40,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'demo-images/*.jpg'],
+      includeAssets: ['icons/*.png'],
+      // アプリの manifest はここだけで定義する。
+      // アイコンの PNG は scripts/generate-icons.mjs が public/favicon*.svg から生成する。
       manifest: {
         name: 'SnapResize AI',
         short_name: 'SnapResize',
         description: 'AI-Powered Image Resizing & Background Removal Tool',
-        theme_color: '#3b82f6',
+        // UI の --color-coral と favicon のグラデーション始点に合わせる
+        theme_color: '#ff6b5b',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: process.env.VITE_BASE_URL || '/',
@@ -61,7 +64,9 @@ export default defineConfig({
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            // maskable は OS が任意の形に切り抜くため、背景を全面に塗り
+            // 中身を safe zone に収めた専用画像を使う（通常アイコンの使い回しは端が欠ける）
+            src: '/icons/icon-512x512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
