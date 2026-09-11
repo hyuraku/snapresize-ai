@@ -23,6 +23,9 @@ function App() {
   const files = useImageStore((state) => state.files);
   const processed = useImageStore((state) => state.processed);
   const isProcessing = useImageStore((state) => state.isProcessing);
+  const currentBatchId = useImageStore((state) => state.currentBatchId);
+  const downloadedBatchId = useImageStore((state) => state.downloadedBatchId);
+  const markBatchDownloaded = useImageStore((state) => state.markBatchDownloaded);
 
   const { processAll } = useImageProcessor();
   const { downloadAll, isDownloading } = useDownload();
@@ -31,7 +34,9 @@ function App() {
   // Show download button after processing is complete
   const showDownloadButton = processed.length > 0 && !isProcessing;
 
-  const [downloadCompleted, setDownloadCompleted] = useState(false);
+  // Auto-save state is tied to the batch id, so clearing or running a second
+  // batch re-arms it while the same batch never auto-saves twice.
+  const downloadCompleted = currentBatchId !== null && downloadedBatchId === currentBatchId;
 
   // Current step is fully derived from the file/processing/download state.
   // 1: awaiting upload, 2: files added, 3: processed, 4: downloaded.
@@ -41,17 +46,26 @@ function App() {
   useEffect(() => {
     if (!isProcessing && processed.length > 0 && files.every((f) => f.status !== 'pending')) {
       const allCompleted = files.filter((f) => f.status === 'completed').length;
-      if (allCompleted === processed.length && processed.length > 0 && !downloadCompleted) {
+      if (allCompleted === processed.length && currentBatchId !== null && !downloadCompleted) {
         // Start download after a short delay
         const timer = setTimeout(async () => {
+          // Mark first so a re-render cannot start a second auto-save for this batch.
+          markBatchDownloaded(currentBatchId);
           await downloadAll();
-          setDownloadCompleted(true);
         }, 500);
         return () => clearTimeout(timer);
       }
     }
     return undefined;
-  }, [isProcessing, processed.length, files, downloadAll, downloadCompleted]);
+  }, [
+    isProcessing,
+    processed.length,
+    files,
+    downloadAll,
+    downloadCompleted,
+    currentBatchId,
+    markBatchDownloaded,
+  ]);
 
   const handleStart = async () => {
     if (files.length === 0 || isProcessing) return;
