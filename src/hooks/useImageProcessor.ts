@@ -8,6 +8,7 @@ import {
   canvasToBlob,
   getPresetSize,
 } from '../utils/imageProcessing';
+import { buildOutputName } from '../utils/outputNaming';
 import { SNS_PRESETS } from '../constants/presets';
 import type { ProcessedImage } from '../types';
 
@@ -273,7 +274,7 @@ export const useImageProcessor = () => {
 
         const preset = SNS_PRESETS[settings.preset];
         const extension = settings.enableBackgroundRemoval ? 'png' : 'jpg';
-        const newName = file.name.replace(/\.[^.]+$/, `_${preset.key}.${extension}`);
+        const newName = buildOutputName(file.name, preset.key, extension);
 
         const processedImage: ProcessedImage = {
           id: crypto.randomUUID(),

@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { useCallback, useState } from 'react';
 import { useImageStore } from '../store/imageStore';
+import { buildZipEntries } from '../utils/outputNaming';
 
 export const useDownload = () => {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -29,13 +30,14 @@ export const useDownload = () => {
       const folder = zip.folder('snapresize-ai');
       if (!folder) throw new Error('Failed to create ZIP folder');
 
-      // 各画像を ZIP に追加
-      for (let i = 0; i < processed.length; i++) {
-        const item = processed[i];
-        if (item) {
-          folder.file(item.name, item.blob);
+      // 各画像を ZIP に追加（同名衝突時は連番で一意化）
+      const zipEntries = buildZipEntries(processed);
+      for (let i = 0; i < zipEntries.length; i++) {
+        const entry = zipEntries[i];
+        if (entry) {
+          folder.file(entry.name, entry.blob);
         }
-        setDownloadProgress(Math.round(((i + 1) / processed.length) * 50));
+        setDownloadProgress(Math.round(((i + 1) / zipEntries.length) * 50));
       }
 
       // ZIP ファイルを生成
