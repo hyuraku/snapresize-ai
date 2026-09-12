@@ -52,21 +52,22 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         start_url: process.env.VITE_BASE_URL || '/',
+        // GitHub Pages などサブパス配信時は base に合わせないとアイコンが 404 になるため相対パスにする
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: 'icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: 'icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
             // maskable は OS が任意の形に切り抜くため、背景を全面に塗り
             // 中身を safe zone に収めた専用画像を使う（通常アイコンの使い回しは端が欠ける）
-            src: '/icons/icon-512x512-maskable.png',
+            src: 'icons/icon-512x512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -74,6 +75,16 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // 既定の globPatterns は .mjs を対象にしないため、ONNX Runtime の
+        // ort-wasm-simd-threaded.asyncify-*.mjs（backgroundRemoval.worker.ts が動的 import する）
+        // が precache から漏れ、オフライン初回起動後の背景除去が失敗する。
+        // 既定に依存せず、必要な資産の拡張子を明示する。
+        // woff2 は既存の runtimeCaching（CacheFirst）で使用サブセットのみを都度キャッシュするため、
+        // ここには含めない。
+        // png と webmanifest は含めない: vite-plugin-pwa が manifest.icons と
+        // manifest.webmanifest 自体を additionalManifestEntries として常に precache に
+        // 追加するため、ここにも加えると同一ファイルが precache に二重登録される。
+        globPatterns: ['**/*.{js,mjs,css,html,wasm,svg}'],
         // WASMファイルが大きいためキャッシュ上限を拡大
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MB
         // Cache AI model
