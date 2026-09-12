@@ -1,4 +1,4 @@
-import { Shield, Lock, Server, Cookie, Database, Trash2, X } from 'lucide-react';
+import { Shield, Lock, Server, Cookie, Database, Trash2, X, Wifi } from 'lucide-react';
 import { getTranslation } from '../constants/translations';
 
 interface PrivacyNoticeProps {
@@ -12,9 +12,15 @@ export const PrivacyNotice = ({ lang = 'ja', variant = 'full', onDismiss }: Priv
 
   if (variant === 'compact') {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-(--color-sage)/10 border border-(--color-sage)/30 px-3 py-2 text-xs">
-        <Shield className="h-4 w-4 text-(--color-sage)" />
-        <span className="text-(--color-navy)">{t('privacyCompact')}</span>
+      <div className="flex flex-col gap-1.5 rounded-lg bg-(--color-sage)/10 border border-(--color-sage)/30 px-3 py-2 text-xs">
+        <div className="flex items-center gap-2">
+          <Shield className="h-4 w-4 text-(--color-sage) flex-shrink-0" />
+          <span className="text-(--color-navy)">{t('privacyCompact')}</span>
+        </div>
+        <div data-testid="privacyModelNetwork" className="flex items-center gap-2">
+          <Wifi className="h-4 w-4 text-(--color-sage) flex-shrink-0" />
+          <span className="text-(--color-navy-light)">{t('privacyModelNetworkDesc')}</span>
+        </div>
       </div>
     );
   }
@@ -78,6 +84,21 @@ export const PrivacyNotice = ({ lang = 'ja', variant = 'full', onDismiss }: Priv
               {t('privacyModelCache')}
             </span>
             <p className="text-xs text-(--color-navy-light) mt-0.5">{t('privacyModelCacheDesc')}</p>
+          </div>
+        </div>
+
+        <div
+          data-testid="privacyModelNetwork"
+          className="flex items-start gap-3 p-3 rounded-xl bg-white/50"
+        >
+          <Wifi className="h-5 w-5 text-(--color-sage) flex-shrink-0" />
+          <div>
+            <span className="font-semibold text-sm text-(--color-navy)">
+              {t('privacyModelNetwork')}
+            </span>
+            <p className="text-xs text-(--color-navy-light) mt-0.5">
+              {t('privacyModelNetworkDesc')}
+            </p>
           </div>
         </div>
 

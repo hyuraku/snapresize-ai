@@ -77,9 +77,8 @@ const translations: Record<Language, Translations> = {
     privacyDesc:
       'すべての処理はお使いのブラウザ内で完結。画像がサーバーに送信されることはありません。',
     // Footer
-    footerCopyright: 'SnapResize AI - オープンソースソフトウェア（MIT License）',
-    footerTerms: '利用規約',
-    footerPrivacy: 'プライバシーポリシー',
+    footerCopyright:
+      'コードは MIT License。背景除去モデル RMBG-1.4 は別条件（非商用。商用利用は BRIA との契約が必要）',
     // Rejected files (上限・理由・対処を必ず含める)
     rejectedTitle: '追加できなかった画像があります',
     rejectedDismiss: '閉じる',
@@ -124,6 +123,9 @@ const translations: Record<Language, Translations> = {
     privacyNoTrackingDesc: 'Cookie、分析ツール、広告トラッカーは使用しません',
     privacyModelCache: 'AIモデルのみキャッシュ',
     privacyModelCacheDesc: '2回目以降の高速起動のためモデルのみローカルに保存',
+    privacyModelNetwork: '初回のみ通信',
+    privacyModelNetworkDesc:
+      'モデルは初回のみHugging Faceから取得（通信あり）。取得後はキャッシュからオフラインでも動作し、画像は送信しません',
     privacyDeletable: 'いつでも削除可能',
     privacyDeletableDesc: 'ブラウザの設定からいつでもキャッシュを削除できます',
   },
@@ -202,9 +204,8 @@ const translations: Record<Language, Translations> = {
     privacyTitle: 'Privacy Protected',
     privacyDesc: 'All processing happens in your browser. No images are sent to any server.',
     // Footer
-    footerCopyright: 'SnapResize AI - Open Source Software (MIT License)',
-    footerTerms: 'Terms',
-    footerPrivacy: 'Privacy Policy',
+    footerCopyright:
+      'Code: MIT License. Background removal model RMBG-1.4 is licensed separately (non-commercial; commercial use requires an agreement with BRIA)',
     // Rejected files (always state the limit and how to fix it)
     rejectedTitle: 'Some images could not be added',
     rejectedDismiss: 'Dismiss',
@@ -249,6 +250,9 @@ const translations: Record<Language, Translations> = {
     privacyNoTrackingDesc: 'No cookies, analytics, or ad trackers',
     privacyModelCache: 'Only AI Model Cached',
     privacyModelCacheDesc: 'Only the AI model is saved locally for faster startup',
+    privacyModelNetwork: 'First Run Needs Network',
+    privacyModelNetworkDesc:
+      'The AI model is fetched from Hugging Face on first use (network required). After that it runs from cache, including offline. Images are never sent.',
     privacyDeletable: 'Deletable Anytime',
     privacyDeletableDesc: 'Clear cache anytime from your browser settings',
   },
