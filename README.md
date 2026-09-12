@@ -6,12 +6,12 @@ A fully browser-based AI image processing tool. Transform images for multiple so
 
 ## Features
 
-- **AI Background Removal**: High-quality background removal using Transformers.js (RMBG-1.4)
+- **AI Background Removal**: Uses BRIA's RMBG-1.4 via Transformers.js. The model is downloaded from the Hugging Face Hub on first use and is licensed separately from this code (see [License](#license)).
 - **SNS Batch Conversion**: Supports Instagram, Twitter, LinkedIn, Facebook formats
 - **Complete Local Processing**: Images are never sent to external servers
-- **Batch Processing**: Process 50+ images at once
+- **Batch Processing**: Up to 50 images per batch, processed one at a time
 - **Watermark**: Add customizable watermarks
-- **PWA Support**: Works offline, installable
+- **PWA Support**: Installable. Offline use works only after the app shell, the ONNX Runtime and the model weights have been fetched and cached once; the first run needs network access.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ A fully browser-based AI image processing tool. Transform images for multiple so
 - **State**: Zustand
 - **UI**: Tailwind CSS + Headless UI
 - **Workers**: Web Workers + OffscreenCanvas
-- **Storage**: Cache Storage API + IndexedDB
+- **Storage**: Cache Storage API (model / runtime assets)
 
 ## Project Structure
 
@@ -63,15 +63,13 @@ npm run test:e2e
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| React | 19.2.8 | UI Framework |
+| React | 19.2.3 | UI Framework |
 | TypeScript | 6.0.3 | Type Safety |
 | Vite | 8.1.5 | Build Tool |
 | Zustand | 5.0.14 | State Management |
 | Transformers.js | 4.2.0 | AI/ML (Background Removal) |
-| Tailwind CSS | 4.3.3 | Styling |
+| Tailwind CSS | 4.3.1 | Styling |
 | JSZip | 3.10.1 | ZIP Export |
-| Comlink | 4.4.1 | Worker Communication |
-| idb | 8.0.0 | IndexedDB Wrapper |
 | Lucide React | 1.21.0 | Icon Library |
 | File Saver | 2.0.5 | File Download |
 
@@ -123,12 +121,12 @@ npm run test:e2e
 3. **WebGPU Unsupported Browsers** (MEDIUM-HIGH)
    - Auto-detection with WASM fallback
    - User warning display
-   - Batch size adjustment (WebGPU: 5 images, WASM: 2 images)
+   - Backend detection reports a recommended chunk size, but processing is sequential today
 
 4. **Heavy Canvas API Processing** (HIGH)
    - Web Workers + OffscreenCanvas
    - Chunked processing (50ms delay)
-   - Concurrency control (max 4 workers)
+   - A single background-removal Web Worker; images are processed one at a time
 
 5. **Memory Management** (MEDIUM-HIGH)
    - Pixel budget enforced before allocation, with the reason shown in the UI
@@ -141,9 +139,17 @@ npm run test:e2e
 
 - **Complete Local Processing**: Images are never uploaded
 - **No Tracking**: No analytics or cookies
-- **GDPR Compliant**: Data export and deletion features
+- **No accounts, no server-side storage**: Images stay in memory and are discarded on clear or reload; the cached model can be removed via the browser's site data
 - **CSP Configured**: Content Security Policy applied
 - **Privacy Notice**: Transparent information disclosure
+
+### Network access
+
+Images are never sent anywhere. On first use, the app fetches the background-removal model
+from Hugging Face, which issues GET requests to `huggingface.co` and Hugging Face's CDN hosts.
+The ONNX Runtime WASM assets are served from this app's own origin, not from a third-party CDN.
+After the app shell, ONNX Runtime and model weights have been fetched and cached once, the app
+works offline; the first run needs network access to complete the initial download.
 
 ## Testing
 
@@ -222,7 +228,34 @@ still fall back to WASM depending on the OS, GPU, or user settings.
 
 ## License
 
-MIT License
+This project has two separate licenses: the code in this repository, and the AI model it
+downloads at runtime.
+
+### Code
+
+MIT License. See [LICENSE](./LICENSE).
+
+### Background removal model
+
+This app uses [BRIA's RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4) for background
+removal. The model is fetched from Hugging Face at runtime and is not bundled or
+redistributed by this repository; the version used is whatever revision Hugging Face serves
+for that model ID at request time, since this project does not currently pin a specific
+revision.
+
+RMBG-1.4 is licensed separately from this repository's code. Quoting the model card verbatim:
+
+> The model is released under a Creative Commons license for non-commercial use.
+>
+> Commercial use is subject to a commercial agreement with BRIA.
+
+- Model card / license field: `license: bria-rmbg-1.4`
+- Full license terms: https://bria.ai/bria-huggingface-model-license-agreement/
+- Commercial licensing: "To purchase a commercial license simply click [Here](https://go.bria.ai/3B4Asxv)."
+
+Whether a given deployment or use of this app is commercial, and obtaining any required
+agreement with BRIA for that use, is the responsibility of whoever deploys or uses the app.
+This README makes no claim about whether any particular deployment holds such an agreement.
 
 ## Links
 
