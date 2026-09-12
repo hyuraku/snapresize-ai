@@ -7,12 +7,13 @@ import {
   Smartphone,
   Palette,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { useImageStore } from '../store/imageStore';
 import { useCapabilityDetection } from '../hooks/useCapabilityDetection';
 import { capabilityDetector } from '../lib/capabilityDetector';
 import { getTranslation } from '../constants/translations';
 import { SNS_PRESETS, PRESET_GROUPS } from '../constants/presets';
+import { MAX_OUTPUT_PX, MIN_OUTPUT_PX, clampOutputSize } from '../constants/limits';
 import type { SNSPresetKey, WatermarkPosition } from '../types';
 
 interface SettingsPanelProps {
@@ -25,6 +26,7 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
   const { capabilityInfo } = useCapabilityDetection();
 
   const settings = useImageStore((state) => state.settings);
+  const customSizeClamped = useImageStore((state) => state.customSizeClamped);
   const modelState = useImageStore((state) => state.modelState);
   const setPreset = useImageStore((state) => state.setPreset);
   const setCustomSize = useImageStore((state) => state.setCustomSize);
@@ -42,6 +44,49 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
     if (settings.enableBackgroundRemoval) parts.push(lang === 'ja' ? '背景除去' : 'BG Removal');
     if (settings.enableWatermark) parts.push(t('watermarkWith'));
     return parts.join(' / ');
+  };
+
+  // 入力中は下書き（文字列）を保持し、確定時だけ store に渡す。
+  // 1 文字ごとにクランプすると「2000」と打つ途中の "2" が 100 に書き換わり、
+  // キーボードでは目的の値を入力できなくなるため。
+  const [widthDraft, setWidthDraft] = useState(String(settings.customWidth));
+  const [heightDraft, setHeightDraft] = useState(String(settings.customHeight));
+
+  // プリセット切り替えなど、外から寸法が変わったときは下書きを同期する。
+  // 「前回の値と比べてレンダー中に調整する」React 公式の書き方
+  // （https://react.dev/learn/you-might-not-need-an-effect）。
+  const [appliedSize, setAppliedSize] = useState({
+    width: settings.customWidth,
+    height: settings.customHeight,
+  });
+  if (appliedSize.width !== settings.customWidth || appliedSize.height !== settings.customHeight) {
+    setAppliedSize({ width: settings.customWidth, height: settings.customHeight });
+    setWidthDraft(String(settings.customWidth));
+    setHeightDraft(String(settings.customHeight));
+  }
+
+  /**
+   * 下書きを確定する（blur / Enter）。
+   * 空欄や数値にならない入力は「直前に確定していた値」に戻す
+   * （1080 に固定すると、ユーザーが設定済みの値を黙って捨ててしまうため）。
+   */
+  const commitCustomSize = (): void => {
+    const parsedWidth = parseInt(widthDraft, 10);
+    const parsedHeight = parseInt(heightDraft, 10);
+    const width = Number.isNaN(parsedWidth) ? settings.customWidth : parsedWidth;
+    const height = Number.isNaN(parsedHeight) ? settings.customHeight : parsedHeight;
+
+    // クランプの実体は store 側（ここは表示を実際に適用された値へ合わせるだけ）
+    setCustomSize(width, height);
+    setWidthDraft(String(clampOutputSize(width)));
+    setHeightDraft(String(clampOutputSize(height)));
+  };
+
+  const handleCustomSizeKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitCustomSize();
+    }
   };
 
   return (
@@ -129,40 +174,52 @@ export const SettingsPanel = ({ lang = 'ja' }: SettingsPanelProps) => {
               )}
             </div>
             {settings.preset === 'custom' && (
-              <div className="flex gap-3 mt-3" data-testid="customSizeInputs">
-                <div className="flex-1">
-                  <label className="text-xs text-(--color-navy-light) mb-1 block font-medium">
-                    Width (px)
-                  </label>
-                  <input
-                    type="number"
-                    min="100"
-                    max="4096"
-                    value={settings.customWidth}
-                    onChange={(e) =>
-                      setCustomSize(parseInt(e.target.value) || 1080, settings.customHeight)
-                    }
-                    className="input-field"
-                    data-testid="customWidth"
-                  />
+              <>
+                <div className="flex gap-3 mt-3" data-testid="customSizeInputs">
+                  <div className="flex-1">
+                    <label className="text-xs text-(--color-navy-light) mb-1 block font-medium">
+                      Width (px)
+                    </label>
+                    <input
+                      type="number"
+                      min={MIN_OUTPUT_PX}
+                      max={MAX_OUTPUT_PX}
+                      value={widthDraft}
+                      onChange={(e) => setWidthDraft(e.target.value)}
+                      onBlur={commitCustomSize}
+                      onKeyDown={handleCustomSizeKeyDown}
+                      className="input-field"
+                      data-testid="customWidth"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-(--color-navy-light) mb-1 block font-medium">
+                      Height (px)
+                    </label>
+                    <input
+                      type="number"
+                      min={MIN_OUTPUT_PX}
+                      max={MAX_OUTPUT_PX}
+                      value={heightDraft}
+                      onChange={(e) => setHeightDraft(e.target.value)}
+                      onBlur={commitCustomSize}
+                      onKeyDown={handleCustomSizeKeyDown}
+                      className="input-field"
+                      data-testid="customHeight"
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs text-(--color-navy-light) mb-1 block font-medium">
-                    Height (px)
-                  </label>
-                  <input
-                    type="number"
-                    min="100"
-                    max="4096"
-                    value={settings.customHeight}
-                    onChange={(e) =>
-                      setCustomSize(settings.customWidth, parseInt(e.target.value) || 1080)
-                    }
-                    className="input-field"
-                    data-testid="customHeight"
-                  />
-                </div>
-              </div>
+                {customSizeClamped && (
+                  <p
+                    className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
+                    data-testid="customSizeNote"
+                  >
+                    {t('customSizeClampedNote')
+                      .replace('{min}', String(MIN_OUTPUT_PX))
+                      .replace('{max}', String(MAX_OUTPUT_PX))}
+                  </p>
+                )}
+              </>
             )}
           </div>
 

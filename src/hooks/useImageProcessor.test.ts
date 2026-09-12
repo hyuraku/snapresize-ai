@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useImageStore } from '../store/imageStore';
 import { useImageProcessor } from './useImageProcessor';
+import { blobToImage, imageToImageData } from '../utils/imageProcessing';
+import { MAX_INPUT_EDGE_PX } from '../constants/limits';
 import type { ImageFile } from '../types';
 
 // canvasToBlob を任意のタイミングで止められるようにするゲート。
@@ -35,8 +37,7 @@ const h = vi.hoisted(() => {
 // Canvas 依存のユーティリティは差し替える
 vi.mock('../utils/imageProcessing', () => ({
   blobToImage: vi.fn(async () => ({ width: 800, height: 600 }) as unknown as HTMLImageElement),
-  blobToImageData: vi.fn(async () => new ImageData(new Uint8ClampedArray(4 * 4 * 4), 4, 4)),
-  blobToImageDataAsync: vi.fn(),
+  imageToImageData: vi.fn(() => new ImageData(new Uint8ClampedArray(4 * 4 * 4), 4, 4)),
   resizeImage: vi.fn(() => document.createElement('canvas')),
   addWatermark: vi.fn(),
   applyBackgroundRemoval: vi.fn(),
@@ -576,6 +577,138 @@ describe('useImageProcessor - batch lifecycle', () => {
     expect(state.files.map((f) => f.status)).toEqual(['completed', 'completed']);
     expect(state.processed).toHaveLength(2);
     expect(state.processed[0]?.hasBackgroundRemoval).toBe(true);
+
+    unmount();
+  });
+
+  // -------------------------------------------------------------------------
+  // 画素予算（デコード時の保険）と壊れた画像からの復帰
+  // -------------------------------------------------------------------------
+
+  it('fails a file whose decoded edge exceeds the limit and keeps processing the batch', async () => {
+    seedFiles(2);
+    // ヘッダ解析で寸法が取れなかった画像を模擬する（1 枚目だけ巨大）
+    vi.mocked(blobToImage).mockResolvedValueOnce({
+      width: MAX_INPUT_EDGE_PX + 1,
+      height: 100,
+    } as unknown as HTMLImageElement);
+
+    const { result, unmount } = renderHook(() => useImageProcessor());
+    await act(async () => {
+      await result.current.processAll();
+    });
+
+    const state = useImageStore.getState();
+    expect(state.files[0]?.status).toBe('failed');
+    expect(state.files[0]?.errorReason).toEqual({
+      key: 'rejectEdgeTooLarge',
+      params: { width: MAX_INPUT_EDGE_PX + 1, height: 100, max: MAX_INPUT_EDGE_PX },
+    });
+    // 上限と対処が文字列としても残る
+    expect(state.files[0]?.error).toContain(String(MAX_INPUT_EDGE_PX));
+    // バッチは継続する
+    expect(state.files[1]?.status).toBe('completed');
+    expect(state.processed).toHaveLength(1);
+    expect(state.isProcessing).toBe(false);
+
+    unmount();
+  });
+
+  it('fails a file whose decoded pixel count exceeds the limit', async () => {
+    seedFiles(1);
+    // 7000 x 6000 = 42MP（どちらの辺も 8192px 以下）
+    vi.mocked(blobToImage).mockResolvedValueOnce({
+      width: 7000,
+      height: 6000,
+    } as unknown as HTMLImageElement);
+
+    const { result, unmount } = renderHook(() => useImageProcessor());
+    await act(async () => {
+      await result.current.processAll();
+    });
+
+    const state = useImageStore.getState();
+    expect(state.files[0]?.status).toBe('failed');
+    expect(state.files[0]?.errorReason?.key).toBe('rejectTooManyPixels');
+    // 丸めずに実数で出す（上限と同じ表記にならない）
+    expect(state.files[0]?.errorReason?.params).toEqual({
+      pixels: '42,000,000',
+      width: 7000,
+      height: 6000,
+      max: '40,000,000',
+    });
+    expect(state.processed).toHaveLength(0);
+
+    unmount();
+  });
+
+  it('fails a broken image with actionable guidance and leaves no pending work', async () => {
+    vi.useFakeTimers();
+    try {
+      seedFiles(2);
+      vi.mocked(blobToImage).mockRejectedValueOnce(new Error('Failed to load image'));
+
+      const { result, unmount } = renderHook(() => useImageProcessor());
+      let running!: Promise<void>;
+      await act(async () => {
+        running = result.current.processAll();
+      });
+      // processAll は 1 枚ごとに 50ms の小休止を挟むので、タイマーを進めて完走させる
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+        await running;
+      });
+
+      const state = useImageStore.getState();
+      expect(state.files[0]?.status).toBe('failed');
+      expect(state.files[0]?.errorReason).toEqual({ key: 'errorDecodeFailed' });
+      expect(state.files[1]?.status).toBe('completed');
+      expect(state.isProcessing).toBe(false);
+
+      // タイマー待機が残っていないこと（モデル待ち 120 秒・マスク待ち 60 秒）
+      const snapshot = JSON.stringify(
+        useImageStore.getState().files.map((f) => [f.id, f.status, f.error])
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(180000);
+      });
+      expect(
+        JSON.stringify(useImageStore.getState().files.map((f) => [f.id, f.status, f.error]))
+      ).toBe(snapshot);
+      expect(useImageStore.getState().processed).toHaveLength(1);
+      expect(useImageStore.getState().isProcessing).toBe(false);
+
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('decodes each image only once when background removal is enabled', async () => {
+    setBackgroundRemoval(true);
+    seedFiles(1);
+    vi.mocked(blobToImage).mockClear();
+    vi.mocked(imageToImageData).mockClear();
+
+    const { result, unmount } = renderHook(() => useImageProcessor());
+    let running!: Promise<void>;
+    await act(async () => {
+      running = result.current.processAll();
+    });
+    await emitModelReady();
+
+    await waitFor(() => expect(currentWorker().processMessages).toHaveLength(1));
+    await act(async () => {
+      currentWorker().emit(
+        maskResultPayload(currentWorker().processMessages[0]?.payload?.id as string)
+      );
+      await running;
+    });
+
+    expect(useImageStore.getState().files[0]?.status).toBe('completed');
+    // Blob からのデコードは 1 回だけ。ImageData は同じ画像から作る
+    expect(vi.mocked(blobToImage)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(imageToImageData)).toHaveBeenCalledTimes(1);
 
     unmount();
   });

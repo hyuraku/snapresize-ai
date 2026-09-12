@@ -25,7 +25,7 @@ const translations: Record<Language, Translations> = {
     // Drop zone
     dropZoneTitle: '画像をドラッグ＆ドロップ',
     dropZoneSubtitle: 'たった3ステップで完成！',
-    dropZoneFormats: 'JPG / PNG / WebP（最大50枚・各50MBまで）',
+    dropZoneFormats: 'JPG / PNG / WebP（最大50枚・各50MB・8192px / 40MPまで）',
     // Model loading
     modelLoading: 'AIモデルを読み込み中...',
     modelInit: 'ニューラルネットワークを初期化中...',
@@ -52,6 +52,8 @@ const translations: Record<Language, Translations> = {
     qualityLabel: '画質',
     qualityLight: '軽量',
     qualityHigh: '高画質',
+    customSizeClampedNote:
+      '※ 出力サイズは{min}〜{max}pxの範囲に収めました。これより大きい画像はメモリ不足で失敗するため作成できません。',
     // Steps
     stepsTitle: 'かんたん3ステップ',
     step1: '画像を選択',
@@ -78,9 +80,24 @@ const translations: Record<Language, Translations> = {
     footerCopyright: 'SnapResize AI - オープンソースソフトウェア（MIT License）',
     footerTerms: '利用規約',
     footerPrivacy: 'プライバシーポリシー',
-    // Alert
-    alertInvalidFile:
-      '対応していない形式か、ファイルサイズが大きすぎます。\nJPG/PNG/WebP形式で50MB以下のファイルを選択してください。',
+    // Rejected files (上限・理由・対処を必ず含める)
+    rejectedTitle: '追加できなかった画像があります',
+    rejectedDismiss: '閉じる',
+    rejectTooManyFiles: '一度に追加できるのは{max}枚までです。枚数を減らしてから追加してください。',
+    rejectFileTooLarge:
+      'ファイルサイズが{size}です。1枚あたりの上限は{max}です。画質を下げるか縮小して、ファイルサイズを下げてから追加してください。',
+    rejectUnsupportedFormat:
+      '対応していない形式です。JPG / PNG / WebP のいずれかで保存し直してから追加してください。',
+    rejectFormatMismatch:
+      'ファイルの中身が拡張子と一致しません（検出: {detected}）。JPG / PNG / WebP のいずれかで保存し直してから追加してください。',
+    rejectEdgeTooLarge:
+      '画像サイズが{width}×{height}pxです。1辺の上限は{max}pxです。縮小してから再度追加してください。',
+    rejectTooManyPixels:
+      '総画素数が{pixels}画素（{width}×{height}px）です。上限は{max}画素です。縮小してから再度追加してください。',
+    rejectBatchTooLarge:
+      '選択中の画像の合計が上限{max}を超えます。枚数を減らすか、ファイルサイズを下げてから追加してください。',
+    errorDecodeFailed:
+      '画像を読み込めませんでした。ファイルが壊れている可能性があります。保存し直すか、別の画像で試してください。',
     // Selection messages
     imagesSelected: '枚の画像を選択中',
     imagesCompleted: '枚の処理が完了しました！',
@@ -134,7 +151,7 @@ const translations: Record<Language, Translations> = {
     // Drop zone
     dropZoneTitle: 'Drag & Drop Images',
     dropZoneSubtitle: 'Done in just 3 steps!',
-    dropZoneFormats: 'JPG / PNG / WebP (up to 50 files, 50MB each)',
+    dropZoneFormats: 'JPG / PNG / WebP (up to 50 files, 50MB / 8192px / 40MP each)',
     // Model loading
     modelLoading: 'Loading AI model...',
     modelInit: 'Initializing neural network...',
@@ -161,6 +178,8 @@ const translations: Record<Language, Translations> = {
     qualityLabel: 'Quality',
     qualityLight: 'Light',
     qualityHigh: 'High',
+    customSizeClampedNote:
+      '※ Output size was clamped to {min}-{max}px. Larger outputs are not created because they run out of memory.',
     // Steps
     stepsTitle: 'Easy 3 Steps',
     step1: 'Select images',
@@ -186,9 +205,24 @@ const translations: Record<Language, Translations> = {
     footerCopyright: 'SnapResize AI - Open Source Software (MIT License)',
     footerTerms: 'Terms',
     footerPrivacy: 'Privacy Policy',
-    // Alert
-    alertInvalidFile:
-      'Unsupported format or file too large.\nPlease select JPG/PNG/WebP files under 50MB.',
+    // Rejected files (always state the limit and how to fix it)
+    rejectedTitle: 'Some images could not be added',
+    rejectedDismiss: 'Dismiss',
+    rejectTooManyFiles: 'You can add up to {max} images at a time. Please add fewer images.',
+    rejectFileTooLarge:
+      'This file is {size}. The limit is {max} per file. Lower the quality or resize it to reduce the file size, then add it again.',
+    rejectUnsupportedFormat:
+      'Unsupported format. Please re-save the image as JPG / PNG / WebP and add it again.',
+    rejectFormatMismatch:
+      'File content does not match its extension (detected: {detected}). Please re-save the image as JPG / PNG / WebP and add it again.',
+    rejectEdgeTooLarge:
+      'This image is {width}x{height}px. The limit is {max}px per edge. Please resize it and add it again.',
+    rejectTooManyPixels:
+      'This image has {pixels} pixels ({width}x{height}px). The limit is {max} pixels. Please resize it and add it again.',
+    rejectBatchTooLarge:
+      'The selected images exceed the {max} total limit. Please add fewer images or reduce their file sizes.',
+    errorDecodeFailed:
+      'The image could not be loaded. The file may be corrupted. Please re-save it or try another image.',
     // Selection messages
     imagesSelected: ' images selected',
     imagesCompleted: ' images completed!',

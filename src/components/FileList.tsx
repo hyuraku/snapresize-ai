@@ -1,6 +1,7 @@
 import { useImageStore } from '../store/imageStore';
 import { getTranslation } from '../constants/translations';
 import { formatBytes } from '../utils/imageProcessing';
+import { formatRejectionReason } from '../utils/rejectionReason';
 import { useDownload } from '../hooks/useDownload';
 import { Image, Loader2, CheckCircle, XCircle, Clock, Download } from 'lucide-react';
 import type { ProcessingStatus } from '../types';
@@ -58,6 +59,13 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
         // originalId で処理済み画像を検索
         const processedItem = processed.find((p) => p.originalId === file.id);
         const processedIndex = processedItem ? processed.indexOf(processedItem) : -1;
+        // 失敗理由は「上限・理由・対処」を含む構造化理由を優先して表示する
+        const failureText =
+          file.status === 'failed'
+            ? file.errorReason
+              ? formatRejectionReason(file.errorReason, lang)
+              : file.error
+            : undefined;
 
         return (
           <div
@@ -71,6 +79,11 @@ export const FileList = ({ lang = 'ja' }: FileListProps) => {
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-(--color-navy) text-sm truncate">{file.name}</p>
                 <p className="text-xs text-(--color-navy-light)">{formatBytes(file.size)}</p>
+                {failureText && (
+                  <p className="mt-1 text-xs text-red-600 break-words" data-testid="fileError">
+                    {failureText}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 ml-3">

@@ -1,7 +1,8 @@
 import { useCallback, useRef, type DragEvent, type ChangeEvent } from 'react';
-import { Upload, Image, Sparkles } from 'lucide-react';
+import { Upload, Image, Sparkles, AlertTriangle, X } from 'lucide-react';
 import { useImageStore } from '../store/imageStore';
 import { getTranslation } from '../constants/translations';
+import { formatRejectionReason } from '../utils/rejectionReason';
 
 interface FileUploadProps {
   lang?: 'ja' | 'en';
@@ -11,6 +12,8 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
   const t = (key: string) => getTranslation(key, lang);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addFiles = useImageStore((state) => state.addFiles);
+  const rejectedFiles = useImageStore((state) => state.rejectedFiles);
+  const dismissRejected = useImageStore((state) => state.dismissRejected);
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -40,11 +43,8 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
         'ring-offset-2',
         'bg-(--color-coral)/5'
       );
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      const result = await addFiles(droppedFiles);
-      if (result.rejected.length > 0) {
-        console.warn('Rejected files:', result.rejected);
-      }
+      // 拒否理由は store の rejectedFiles に入り、下のパネルに表示される
+      await addFiles(Array.from(e.dataTransfer.files));
     },
     [addFiles]
   );
@@ -52,11 +52,7 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
   const handleFileChange = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
-        const selectedFiles = Array.from(e.target.files);
-        const result = await addFiles(selectedFiles);
-        if (result.rejected.length > 0) {
-          console.warn('Rejected files:', result.rejected);
-        }
+        await addFiles(Array.from(e.target.files));
       }
       // リセットして同じファイルを再選択可能に
       e.target.value = '';
@@ -100,6 +96,40 @@ export const FileUpload = ({ lang = 'ja' }: FileUploadProps) => {
           </button>
         </div>
       </div>
+      {rejectedFiles.length > 0 && (
+        <div
+          className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+          role="alert"
+          data-testid="rejectedPanel"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-amber-800">{t('rejectedTitle')}</p>
+              <ul className="mt-2 space-y-1.5">
+                {rejectedFiles.map((rejected, index) => (
+                  <li
+                    key={`${rejected.name}-${index}`}
+                    className="text-xs text-amber-700 break-words"
+                  >
+                    <span className="font-medium">{rejected.name}</span>：
+                    {formatRejectionReason(rejected.reason, lang)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              type="button"
+              onClick={dismissRejected}
+              aria-label={t('rejectedDismiss')}
+              data-testid="dismissRejected"
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-amber-700 transition-colors hover:bg-amber-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
       <input
         ref={fileInputRef}
         type="file"

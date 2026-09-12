@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useImageStore } from '../store/imageStore';
 import {
   blobToImage,
-  blobToImageData,
+  imageToImageData,
   resizeImage,
   addWatermark,
   canvasToBlob,
@@ -10,7 +10,9 @@ import {
 } from '../utils/imageProcessing';
 import { buildOutputName } from '../utils/outputNaming';
 import { SNS_PRESETS } from '../constants/presets';
-import type { ImageFile, ProcessedImage, ProcessingSettings } from '../types';
+import { MAX_INPUT_EDGE_PX, MAX_INPUT_PIXELS, formatPixels } from '../constants/limits';
+import { formatRejectionReason } from '../utils/rejectionReason';
+import type { ImageFile, ProcessedImage, ProcessingSettings, RejectionReason } from '../types';
 
 /** モデル準備完了を待つ上限 */
 const MODEL_READY_TIMEOUT_MS = 120000;
@@ -22,6 +24,21 @@ class BatchAbortedError extends Error {
   constructor(message = '処理が中断されました') {
     super(message);
     this.name = 'BatchAbortedError';
+  }
+}
+
+/**
+ * 上限超過・デコード失敗など、理由と対処を UI に出せる失敗。
+ * 文言は持たず構造化した理由だけを持ち、表示側が言語に応じて組み立てる。
+ */
+class RejectedFileError extends Error {
+  readonly reason: RejectionReason;
+
+  constructor(reason: RejectionReason) {
+    // store の error（文字列）にも同じ内容が入るよう、既定言語で文字列化しておく
+    super(formatRejectionReason(reason));
+    this.name = 'RejectedFileError';
+    this.reason = reason;
   }
 }
 
@@ -267,7 +284,8 @@ export const useImageProcessor = () => {
       const initialState = useImageStore.getState();
       // 結果を store に書き戻してよいかは「バッチIDが現行と一致」かつ
       // 「対象ファイルがまだ store にある」で判定する
-      const batchId = options?.batchId !== undefined ? options.batchId : initialState.currentBatchId;
+      const batchId =
+        options?.batchId !== undefined ? options.batchId : initialState.currentBatchId;
       // 設定はバッチ開始時の snapshot を使い、処理中の変更が途中から混ざらないようにする
       const activeSettings = options?.settings ?? initialState.settings;
       const file = initialState.files.find((f) => f.id === fileId);
@@ -280,17 +298,51 @@ export const useImageProcessor = () => {
       const assertValid = (): void => {
         if (!isValid()) throw new BatchAbortedError();
       };
-      const setStatus = (status: ImageFile['status'], progress?: number, error?: string): void => {
-        if (isValid()) updateFileStatus(fileId, status, progress, error);
+      const setStatus = (
+        status: ImageFile['status'],
+        progress?: number,
+        error?: string,
+        errorReason?: RejectionReason
+      ): void => {
+        if (isValid()) updateFileStatus(fileId, status, progress, error, errorReason);
       };
 
       try {
         assertValid();
         setStatus('processing', 10);
 
-        // Blob から Image を取得
-        const img = await blobToImage(file.blob);
+        // Blob から Image を取得（デコードはここ 1 回だけ）
+        let img: HTMLImageElement;
+        try {
+          img = await blobToImage(file.blob);
+        } catch {
+          // 壊れた画像。待機を残さずこのファイルだけ失敗させる
+          throw new RejectedFileError({ key: 'errorDecodeFailed' });
+        }
         assertValid();
+
+        // ヘッダ解析で寸法が取れなかった場合の保険。
+        // 実寸を確保する前にここで拒否する
+        const naturalWidth = img.naturalWidth || img.width;
+        const naturalHeight = img.naturalHeight || img.height;
+        if (naturalWidth > MAX_INPUT_EDGE_PX || naturalHeight > MAX_INPUT_EDGE_PX) {
+          throw new RejectedFileError({
+            key: 'rejectEdgeTooLarge',
+            params: { width: naturalWidth, height: naturalHeight, max: MAX_INPUT_EDGE_PX },
+          });
+        }
+        if (naturalWidth * naturalHeight > MAX_INPUT_PIXELS) {
+          throw new RejectedFileError({
+            key: 'rejectTooManyPixels',
+            params: {
+              pixels: formatPixels(naturalWidth * naturalHeight),
+              width: naturalWidth,
+              height: naturalHeight,
+              max: formatPixels(MAX_INPUT_PIXELS),
+            },
+          });
+        }
+
         setStatus('processing', 20);
 
         // 背景除去が有効な場合
@@ -300,7 +352,8 @@ export const useImageProcessor = () => {
           await waitForModelReady();
           assertValid();
 
-          const imageData = await blobToImageData(file.blob);
+          // デコード済みの画像を使い回す（Blob から再デコードしない）
+          const imageData = imageToImageData(img);
           assertValid();
           setStatus('processing', 30);
 
@@ -359,6 +412,9 @@ export const useImageProcessor = () => {
           }
 
           ctx.drawImage(tempCanvas, offsetX, offsetY, drawWidth, drawHeight);
+          // 原寸の一時 canvas を抱え続けない
+          tempCanvas.width = 0;
+          tempCanvas.height = 0;
         } else {
           // 通常のリサイズ
           canvas = resizeImage(img, width, height);
@@ -409,7 +465,12 @@ export const useImageProcessor = () => {
           return null;
         }
         console.error('Processing error:', error);
-        setStatus('failed', 0, error instanceof Error ? error.message : 'Unknown error');
+        setStatus(
+          'failed',
+          0,
+          error instanceof Error ? error.message : 'Unknown error',
+          error instanceof RejectedFileError ? error.reason : undefined
+        );
         return null;
       }
     },

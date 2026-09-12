@@ -4,10 +4,22 @@ import type {
   ProcessedImage,
   ProcessingSettings,
   ModelState,
+  RejectedFile,
+  RejectionReason,
   SNSPresetKey,
   WatermarkPosition,
 } from '../types';
 import { validateImageFiles } from '../utils/fileValidation';
+import {
+  MAX_BATCH_TOTAL_BYTES,
+  MAX_FILES,
+  MAX_FILE_SIZE_BYTES,
+  MAX_INPUT_EDGE_PX,
+  MAX_INPUT_PIXELS,
+  clampOutputSize,
+  toMegabytes,
+  formatPixels,
+} from '../constants/limits';
 
 interface ImageStore {
   // State
@@ -23,19 +35,26 @@ interface ImageStore {
   currentBatchId: string | null;
   /** 自動保存（ZIP 保存）が完了済みのバッチ ID */
   downloadedBatchId: string | null;
+  /** 直近の addFiles で拒否されたファイルと理由（UI 表示用） */
+  rejectedFiles: RejectedFile[];
+  /** 出力サイズがクランプされたか（設定 UI の注記に使う） */
+  customSizeClamped: boolean;
 
   // File operations
   addFiles: (files: File[]) => Promise<{
     added: number;
-    rejected: Array<{ name: string; error: string }>;
+    rejected: RejectedFile[];
   }>;
+  /** 拒否理由の表示を閉じる */
+  dismissRejected: () => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
   updateFileStatus: (
     id: string,
     status: ImageFile['status'],
     progress?: number,
-    error?: string
+    error?: string,
+    errorReason?: RejectionReason
   ) => void;
   /** failed のファイルを pending に戻す（再試行用）。戻した件数を返す */
   resetFailedFiles: () => number;
@@ -100,38 +119,128 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   isProcessing: false,
   currentBatchId: null,
   downloadedBatchId: null,
+  rejectedFiles: [],
+  customSizeClamped: false,
 
   // File operations
   addFiles: async (newFiles: File[]) => {
-    // Apply size limit first
-    const sizeFilteredFiles = newFiles
-      .filter((file) => file.size <= 50 * 1024 * 1024) // 50MB limit
-      .slice(0, 50 - get().files.length); // Max 50 files
+    // 読み取り（I/O）は並列に、判定は入力順に行う。
+    // 総量の判定は「それまでに受け入れた分」に依存するので順序が意味を持つ。
+    const validations = await validateImageFiles(newFiles);
 
-    // Execute magic byte validation
-    const { validFiles, invalidFiles } = await validateImageFiles(sizeFilteredFiles);
+    const existing = get().files;
+    let acceptedCount = existing.length;
+    let acceptedBytes = existing.reduce((total, file) => total + file.size, 0);
 
-    const imageFiles: ImageFile[] = validFiles.map((file) => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      blob: file,
-      status: 'pending' as const,
-      progress: 0,
-    }));
+    const imageFiles: ImageFile[] = [];
+    const rejected: RejectedFile[] = [];
+
+    newFiles.forEach((file, index) => {
+      // 1. 枚数
+      if (acceptedCount >= MAX_FILES) {
+        rejected.push({
+          name: file.name,
+          reason: { key: 'rejectTooManyFiles', params: { max: MAX_FILES } },
+        });
+        return;
+      }
+
+      // 2. 単体サイズ
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        rejected.push({
+          name: file.name,
+          reason: {
+            key: 'rejectFileTooLarge',
+            params: { size: toMegabytes(file.size), max: toMegabytes(MAX_FILE_SIZE_BYTES) },
+          },
+        });
+        return;
+      }
+
+      // 3. 形式（マジックバイト）
+      const validation = validations[index];
+      if (!validation || !validation.isValid) {
+        rejected.push({
+          name: file.name,
+          reason: validation?.detectedType
+            ? {
+                key: 'rejectFormatMismatch',
+                params: { detected: validation.detectedType },
+              }
+            : { key: 'rejectUnsupportedFormat' },
+        });
+        return;
+      }
+
+      // 4. 寸法（ヘッダから読めた場合のみ。読めない場合はデコード時に再チェックする）
+      const { width, height } = validation;
+      if (width !== undefined && height !== undefined) {
+        if (width > MAX_INPUT_EDGE_PX || height > MAX_INPUT_EDGE_PX) {
+          rejected.push({
+            name: file.name,
+            reason: {
+              key: 'rejectEdgeTooLarge',
+              params: { width, height, max: MAX_INPUT_EDGE_PX },
+            },
+          });
+          return;
+        }
+        if (width * height > MAX_INPUT_PIXELS) {
+          rejected.push({
+            name: file.name,
+            reason: {
+              key: 'rejectTooManyPixels',
+              params: {
+                pixels: formatPixels(width * height),
+                width,
+                height,
+                max: formatPixels(MAX_INPUT_PIXELS),
+              },
+            },
+          });
+          return;
+        }
+      }
+
+      // 5. バッチ総量（超えた 1 枚だけを拒否し、残りは順に評価し続ける）
+      if (acceptedBytes + file.size > MAX_BATCH_TOTAL_BYTES) {
+        rejected.push({
+          name: file.name,
+          reason: {
+            key: 'rejectBatchTooLarge',
+            params: { max: toMegabytes(MAX_BATCH_TOTAL_BYTES) },
+          },
+        });
+        return;
+      }
+
+      acceptedCount += 1;
+      acceptedBytes += file.size;
+      imageFiles.push({
+        id: crypto.randomUUID(),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        blob: file,
+        status: 'pending' as const,
+        progress: 0,
+      });
+    });
 
     set((state) => ({
       files: [...state.files, ...imageFiles],
+      // 表示は「直近の追加操作の結果」だけにする
+      rejectedFiles: rejected,
     }));
 
     return {
       added: imageFiles.length,
-      rejected: invalidFiles.map((f) => ({
-        name: f.file.name,
-        error: f.error,
-      })),
+      rejected,
     };
+  },
+
+  dismissRejected: () => {
+    set({ rejectedFiles: [] });
   },
 
   removeFile: (id: string) => {
@@ -150,13 +259,14 @@ export const useImageStore = create<ImageStore>((set, get) => ({
       currentBatchId: null,
       downloadedBatchId: null,
       isProcessing: false,
+      rejectedFiles: [],
     });
   },
 
-  updateFileStatus: (id, status, progress, error) => {
+  updateFileStatus: (id, status, progress, error, errorReason) => {
     set((state) => ({
       files: state.files.map((f) =>
-        f.id === id ? { ...f, status, progress: progress ?? f.progress, error } : f
+        f.id === id ? { ...f, status, progress: progress ?? f.progress, error, errorReason } : f
       ),
     }));
   },
@@ -167,7 +277,13 @@ export const useImageStore = create<ImageStore>((set, get) => ({
       files: state.files.map((f) => {
         if (f.status !== 'failed') return f;
         reset += 1;
-        return { ...f, status: 'pending' as const, progress: 0, error: undefined };
+        return {
+          ...f,
+          status: 'pending' as const,
+          progress: 0,
+          error: undefined,
+          errorReason: undefined,
+        };
       }),
     }));
     return reset;
@@ -192,8 +308,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   setCustomSize: (width: number, height: number) => {
+    // 出力側の画素予算。Canvas の確保に失敗する大きさを設定できないようにする
+    const clampedWidth = clampOutputSize(width);
+    const clampedHeight = clampOutputSize(height);
     set((state) => ({
-      settings: { ...state.settings, customWidth: width, customHeight: height },
+      settings: { ...state.settings, customWidth: clampedWidth, customHeight: clampedHeight },
+      customSizeClamped: clampedWidth !== width || clampedHeight !== height,
     }));
   },
 

@@ -131,10 +131,11 @@ npm run test:e2e
    - Concurrency control (max 4 workers)
 
 5. **Memory Management** (MEDIUM-HIGH)
-   - Auto cleanup at 800MB threshold
+   - Pixel budget enforced before allocation, with the reason shown in the UI
    - Blob URL tracking and release
-   - File size limit (50MB)
-   - Image resolution limit (8K)
+   - Per file: 50MB; per batch: 50 files and 800MB total
+   - Input resolution: 8192px per edge and 40MP in total
+   - Output (custom size): clamped to 100-4096px
 
 ## Security & Privacy
 
