@@ -9,6 +9,23 @@ export interface ImageFile {
   status: ProcessingStatus;
   progress: number;
   error?: string;
+  /** 失敗理由の構造化表現（UI が言語に応じて文字列化する） */
+  errorReason?: RejectionReason;
+}
+
+/**
+ * 拒否・失敗の理由。
+ * 文言を持たず「翻訳キー＋パラメータ」で表すことで、UI 側が JA/EN を出し分けられる。
+ */
+export interface RejectionReason {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
+/** 追加できなかったファイルと、その理由 */
+export interface RejectedFile {
+  name: string;
+  reason: RejectionReason;
 }
 
 export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';

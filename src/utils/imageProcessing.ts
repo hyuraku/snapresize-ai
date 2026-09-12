@@ -132,35 +132,34 @@ export const canvasToBlob = (
   });
 };
 
+/** 画像の実寸（naturalWidth が無い環境では width にフォールバックする） */
+const getNaturalSize = (img: HTMLImageElement): { width: number; height: number } => ({
+  width: img.naturalWidth || img.width,
+  height: img.naturalHeight || img.height,
+});
+
 /**
- * Blob から ImageData を取得する
+ * デコード済みの画像から ImageData を取得する。
+ * Blob から作り直すと 2 回目のデコードと原寸 RGBA の複製が増えるため、
+ * 呼び出し側が持っている HTMLImageElement をそのまま使う。
+ * 取り出した後は原寸 canvas を 0×0 にして即座に解放する。
  */
-export const blobToImageData = (blob: Blob): Promise<ImageData> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
+export const imageToImageData = (img: HTMLImageElement): ImageData => {
+  const { width, height } = getNaturalSize(img);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas context not available');
 
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Canvas context not available'));
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      resolve(ctx.getImageData(0, 0, img.width, img.height));
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-
-    img.src = url;
-  });
+  try {
+    ctx.drawImage(img, 0, 0);
+    return ctx.getImageData(0, 0, width, height);
+  } finally {
+    // 原寸のバックバッファを抱え続けない
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 };
 
 /**

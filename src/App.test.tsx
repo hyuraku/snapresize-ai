@@ -21,7 +21,7 @@ vi.mock('./hooks/useDownload', () => ({
 // Canvas 依存のユーティリティは差し替える
 vi.mock('./utils/imageProcessing', () => ({
   blobToImage: vi.fn(async () => ({ width: 800, height: 600 }) as unknown as HTMLImageElement),
-  blobToImageData: vi.fn(),
+  imageToImageData: vi.fn(),
   resizeImage: vi.fn(() => document.createElement('canvas')),
   addWatermark: vi.fn(),
   applyBackgroundRemoval: vi.fn(),
