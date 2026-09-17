@@ -163,8 +163,11 @@ npm run test:unit
 # Integration tests
 npm run test:integration
 
-# E2E tests (Playwright)
+# E2E tests (Playwright, dev server)
 npm run test:e2e
+
+# Release gate (production build in a real browser)
+npm run build && npm run test:e2e:gate
 
 # Generate coverage report
 npm run test:coverage
@@ -177,8 +180,22 @@ npm run test:coverage
 | `npm test` | Run all unit tests (Watch mode) |
 | `npm run test:unit` | Run unit tests with coverage report |
 | `npm run test:integration` | Run integration tests |
-| `npm run test:e2e` | Run E2E tests with Playwright |
+| `npm run test:e2e` | Run E2E tests with Playwright against the dev server |
+| `npm run test:e2e:gate` | Run the release gate against the production build (`dist`) |
 | `npm run test:coverage` | Generate and display coverage report |
+
+### Release gate
+
+`npm run test:e2e:gate` runs `e2e/releaseGate.spec.ts` against `vite preview`, not the dev
+server. It checks the things that only exist in a real production build:
+
+- the downloaded ZIP holds real, decodable images at the preset size, with no name collisions
+- the Service Worker precache actually holds the ONNX Runtime `.wasm` / `.mjs` and the worker JS
+- the app still boots and finishes a resize after going offline and reloading
+
+CI runs it on every PR, and `deploy.yml` runs it against the same `dist` it is about to publish,
+so a failing gate stops the deploy. It does not download the background-removal model; that keeps
+CI off the network. Locally, pass `E2E_PREVIEW_PORT=4199` if port 4173 is taken.
 
 ### Test File Structure
 
