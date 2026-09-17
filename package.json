@@ -12,6 +12,7 @@
     "test:unit": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
+    "test:e2e:gate": "E2E_TARGET=preview playwright test --project=release-gate",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",

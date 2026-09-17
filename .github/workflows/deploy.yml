@@ -45,6 +45,26 @@ jobs:
           # GitHub Pages 用のベースパス（リポジトリ名に合わせて自動設定）
           VITE_BASE_URL: /${{ github.event.repository.name }}/
 
+      # 配る成果物そのものをゲートに通す。
+      # 別ジョブで再ビルドすると「試験した dist」と「配る dist」が別物になるため、
+      # ここで同一の dist に対して実行する。失敗すれば artifact は上がらず deploy は起きない。
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Release gate against the artifact
+        run: npm run test:e2e:gate
+        env:
+          # Pages 用 base でビルドしているため、preview も同じサブパスで配信される
+          E2E_BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Upload release gate report on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: deploy-release-gate-report
+          path: playwright-report/
+          retention-days: 7
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 

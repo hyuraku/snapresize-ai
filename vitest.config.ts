@@ -18,6 +18,7 @@ export default defineConfig({
         '**/dist/',
         '**/build/',
         '**/*.test.{ts,tsx}',
+        'src/integration/',
       ],
       all: true,
       lines: 80,
@@ -25,7 +26,8 @@ export default defineConfig({
       branches: 80,
       statements: 80,
     },
+    // src/integration/ は vitest.integration.config.ts が担当する（二重実行を避ける）
     include: ['src/**/*.test.{ts,tsx}'],
-    exclude: ['node_modules', 'dist', 'build'],
+    exclude: ['node_modules', 'dist', 'build', 'src/integration/**'],
   },
 });

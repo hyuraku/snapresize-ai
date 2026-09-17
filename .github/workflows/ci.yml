@@ -52,3 +52,42 @@ jobs:
 
       - name: Test
         run: npx vitest run
+
+      - name: Integration test
+        run: npm run test:integration
+
+  # 本番ビルド成果物を実ブラウザで試験するリリースゲート。
+  # dev サーバーには Service Worker も precache も存在しないため、
+  # ここだけは vite preview（dist）に対して走らせる。
+  release-gate:
+    name: Release gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run release gate
+        run: npm run test:e2e:gate
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-gate-report
+          path: playwright-report/
+          retention-days: 7
