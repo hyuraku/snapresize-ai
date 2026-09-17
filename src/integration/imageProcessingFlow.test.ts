@@ -1,289 +1,177 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import JSZip from 'jszip';
+import { useImageStore } from '../store/imageStore';
+import { useDownload } from '../hooks/useDownload';
+import { buildOutputName } from '../utils/outputNaming';
+import { SNS_PRESETS } from '../constants/presets';
+import type { ProcessedImage } from '../types';
 
-// Mock state management
-interface FileItem {
-  id: string;
-  name: string;
-  size: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  blob: Blob;
-}
+/**
+ * 保存経路の統合テスト。
+ *
+ * 本番の store（useImageStore）と本番の useDownload、実物の JSZip を通す。
+ * 以前はこのファイル内で ImageProcessingService というモックを定義して
+ * それ自身を試験していたため、本番コードの不具合を一切検出できなかった。
+ *
+ * 守れる範囲:
+ *   - 出力名の生成と ZIP 内での一意化（同名入力で成果物が落ちないこと）
+ *   - 1 枚なら単体保存、複数枚なら ZIP という分岐
+ *   - バッチ境界（クリア・2 バッチ目）で自動保存の状態が正しく張り直されること
+ *
+ * 守れない範囲（jsdom の限界。e2e/releaseGate.spec.ts が担当）:
+ *   - ZIP に入った画像が実際に復号できるか・指定寸法か
+ *     src/test/setup.ts が toBlob を Blob(['mock-image']) に差し替えているため、
+ *     ここで ZIP から取り出せるのは 10 バイトの文字列でしかない。
+ *   - Service Worker / precache / オフライン起動
+ */
 
-interface AppState {
-  files: FileItem[];
-  processed: Array<{
-    id: string;
-    name: string;
-    blob: Blob;
-  }>;
-  processing: boolean;
-  modelLoaded: boolean;
-}
+// file-saver はブラウザのダウンロード機構を叩くので、ここだけ差し替えて
+// 「何という名前で、どんな Blob が保存されたか」を捕まえる。
+const saveAsMock = vi.fn();
+vi.mock('file-saver', () => ({
+  saveAs: (blob: Blob, name: string) => saveAsMock(blob, name),
+}));
 
-// Mock image processing workflow
-class ImageProcessingService {
-  state: AppState = {
-    files: [],
-    processed: [],
-    processing: false,
-    modelLoaded: false,
-  };
+const preset = SNS_PRESETS['instagram-square'];
 
-  async addFiles(fileList: File[]): Promise<void> {
-    const entries = fileList
-      .filter((file) => /image\/(png|jpeg|webp)/.test(file.type))
-      .filter((file) => file.size <= 50 * 1024 * 1024)
-      .slice(0, 50 - this.state.files.length)
-      .map((file) => ({
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        status: 'pending' as const,
-        progress: 0,
-        blob: file,
-      }));
+/** 処理済み画像を 1 件作る。blob の中身は jsdom では意味を持たない */
+const makeProcessed = (inputName: string, index: number): ProcessedImage => ({
+  id: `processed-${index}`,
+  originalId: `file-${index}`,
+  name: buildOutputName(inputName, preset.key, 'jpg'),
+  blob: new Blob([`image-bytes-${index}`], { type: 'image/jpeg' }),
+  preset,
+  hasWatermark: false,
+  hasBackgroundRemoval: false,
+  quality: 90,
+});
 
-    this.state.files.push(...entries);
-  }
+/** saveAs が受け取った ZIP を読み戻し、ディレクトリを除いたエントリ名を返す */
+const readSavedZipEntryNames = async (): Promise<string[]> => {
+  expect(saveAsMock).toHaveBeenCalledTimes(1);
+  const [blob] = saveAsMock.mock.calls[0]!;
+  const zip = await JSZip.loadAsync(await (blob as Blob).arrayBuffer());
+  return Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .map((entry) => entry.name)
+    .sort();
+};
 
-  async processImage(
-    file: FileItem,
-    targetSize: { width: number; height: number },
-    quality: number
-  ): Promise<Blob> {
-    // Simulate processing
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(new Blob(['processed-image'], { type: 'image/jpeg' }));
-      }, 10);
-    });
-  }
-
-  async runBatch(targetSize: { width: number; height: number }, quality: number): Promise<void> {
-    if (this.state.processing || !this.state.files.length) return;
-
-    this.state.processing = true;
-
-    for (const file of this.state.files) {
-      if (file.status === 'completed' || file.status === 'failed') continue;
-
-      file.status = 'processing';
-      file.progress = 10;
-
-      try {
-        file.progress = 30;
-        const processedBlob = await this.processImage(file, targetSize, quality);
-        file.progress = 90;
-        file.status = 'completed';
-        file.progress = 100;
-
-        const newName = file.name.replace(/\.[^.]+$/, '_resized.jpg');
-        this.state.processed.push({
-          id: file.id,
-          name: newName,
-          blob: processedBlob,
-        });
-      } catch (error) {
-        file.status = 'failed';
-        file.progress = 0;
-      }
-    }
-
-    this.state.processing = false;
-  }
-
-  async downloadAll(): Promise<Blob> {
-    // Simulate ZIP creation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(new Blob(['zip-content'], { type: 'application/zip' }));
-      }, 10);
-    });
-  }
-
-  clear(): void {
-    this.state.files = [];
-    this.state.processed = [];
-    this.state.processing = false;
-  }
-}
-
-describe('Image Processing Integration Tests', () => {
-  let service: ImageProcessingService;
-
+describe('保存フロー（本番 store + useDownload + 実 JSZip）', () => {
   beforeEach(() => {
-    service = new ImageProcessingService();
+    saveAsMock.mockClear();
+    act(() => {
+      useImageStore.getState().clearFiles();
+    });
   });
 
-  it('should complete full workflow from upload to download', async () => {
-    // Step 1: Add files
-    const files = [
-      new File(['test1'], 'test1.png', { type: 'image/png' }),
-      new File(['test2'], 'test2.jpg', { type: 'image/jpeg' }),
-    ];
+  it('同名入力が 2 枚あっても ZIP に 2 枚とも残る', async () => {
+    const { result } = renderHook(() => useDownload());
 
-    await service.addFiles(files);
-
-    expect(service.state.files).toHaveLength(2);
-    expect(service.state.files[0].status).toBe('pending');
-    expect(service.state.files[1].status).toBe('pending');
-
-    // Step 2: Process batch
-    const targetSize = { width: 1080, height: 1080 };
-    const quality = 90;
-
-    await service.runBatch(targetSize, quality);
-
-    expect(service.state.processing).toBe(false);
-    expect(service.state.files[0].status).toBe('completed');
-    expect(service.state.files[1].status).toBe('completed');
-    expect(service.state.files[0].progress).toBe(100);
-    expect(service.state.files[1].progress).toBe(100);
-    expect(service.state.processed).toHaveLength(2);
-
-    // Step 3: Download
-    const zipBlob = await service.downloadAll();
-
-    expect(zipBlob).toBeInstanceOf(Blob);
-    expect(zipBlob.type).toBe('application/zip');
-  });
-
-  it('should filter invalid files during upload', async () => {
-    const files = [
-      new File(['valid'], 'valid.png', { type: 'image/png' }),
-      new File(['invalid'], 'invalid.gif', { type: 'image/gif' }),
-      new File(['invalid'], 'invalid.pdf', { type: 'application/pdf' }),
-    ];
-
-    await service.addFiles(files);
-
-    expect(service.state.files).toHaveLength(1);
-    expect(service.state.files[0].name).toBe('valid.png');
-  });
-
-  it('should respect maximum file count', async () => {
-    const files = Array.from(
-      { length: 60 },
-      (_, i) => new File([`test${i}`], `test${i}.png`, { type: 'image/png' })
-    );
-
-    await service.addFiles(files);
-
-    expect(service.state.files).toHaveLength(50);
-  });
-
-  it('should filter files exceeding size limit', async () => {
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    const smallFile = new File(['x'], 'small.png', { type: 'image/png' });
-    const largeFile = new File(['x'.repeat(maxSize + 1)], 'large.png', {
-      type: 'image/png',
+    act(() => {
+      useImageStore.getState().addProcessedImage(makeProcessed('same.png', 1));
+      useImageStore.getState().addProcessedImage(makeProcessed('same.png', 2));
     });
 
-    await service.addFiles([smallFile, largeFile]);
+    await act(async () => {
+      await result.current.downloadAll();
+    });
 
-    expect(service.state.files).toHaveLength(1);
-    expect(service.state.files[0].name).toBe('small.png');
+    expect(await readSavedZipEntryNames()).toEqual([
+      'snapresize-ai/same_instagram-square (2).jpg',
+      'snapresize-ai/same_instagram-square.jpg',
+    ]);
   });
 
-  it('should not start processing when already processing', async () => {
-    const files = [new File(['test'], 'test.png', { type: 'image/png' })];
-    await service.addFiles(files);
+  it('拡張子なし・日本語名でも成果物が落ちない', async () => {
+    const { result } = renderHook(() => useDownload());
 
-    service.state.processing = true;
-    const fileCountBefore = service.state.files.length;
+    act(() => {
+      useImageStore.getState().addProcessedImage(makeProcessed('拡張子なし', 1));
+      useImageStore.getState().addProcessedImage(makeProcessed('拡張子なし', 2));
+      useImageStore.getState().addProcessedImage(makeProcessed('写真.jpeg', 3));
+    });
 
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
+    await act(async () => {
+      await result.current.downloadAll();
+    });
 
-    expect(service.state.files[0].status).toBe('pending');
-    expect(service.state.files.length).toBe(fileCountBefore);
+    const names = await readSavedZipEntryNames();
+    expect(names).toHaveLength(3);
+    expect(new Set(names).size).toBe(3);
+    expect(names).toContain('snapresize-ai/写真_instagram-square.jpg');
   });
 
-  it('should not start processing when no files', async () => {
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
+  it('1 枚だけなら ZIP にせず単体ファイルとして保存する', async () => {
+    const { result } = renderHook(() => useDownload());
 
-    expect(service.state.processing).toBe(false);
-    expect(service.state.processed).toHaveLength(0);
+    act(() => {
+      useImageStore.getState().addProcessedImage(makeProcessed('solo.png', 1));
+    });
+
+    await act(async () => {
+      await result.current.downloadAll();
+    });
+
+    expect(saveAsMock).toHaveBeenCalledTimes(1);
+    const [, name] = saveAsMock.mock.calls[0]!;
+    expect(name).toBe('solo_instagram-square.jpg');
   });
 
-  it('should handle processing errors gracefully', async () => {
-    const files = [new File(['test'], 'test.png', { type: 'image/png' })];
-    await service.addFiles(files);
+  it('処理済みが 0 件なら保存しない', async () => {
+    const { result } = renderHook(() => useDownload());
 
-    // Mock processing error
-    service.processImage = vi.fn().mockRejectedValue(new Error('Processing failed'));
+    await act(async () => {
+      await result.current.downloadAll();
+    });
 
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
-
-    expect(service.state.files[0].status).toBe('failed');
-    expect(service.state.files[0].progress).toBe(0);
-    expect(service.state.processed).toHaveLength(0);
+    expect(saveAsMock).not.toHaveBeenCalled();
   });
 
-  it('should skip already processed files', async () => {
-    const files = [
-      new File(['test1'], 'test1.png', { type: 'image/png' }),
-      new File(['test2'], 'test2.png', { type: 'image/png' }),
-    ];
-    await service.addFiles(files);
+  it('クリアすると過去の成果物が次の保存に混ざらない', async () => {
+    const { result } = renderHook(() => useDownload());
 
-    // Complete first batch
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
-    expect(service.state.processed).toHaveLength(2);
+    act(() => {
+      useImageStore.getState().addProcessedImage(makeProcessed('old.png', 1));
+      useImageStore.getState().addProcessedImage(makeProcessed('old.png', 2));
+      useImageStore.getState().clearFiles();
+      useImageStore.getState().addProcessedImage(makeProcessed('new.png', 3));
+      useImageStore.getState().addProcessedImage(makeProcessed('new.png', 4));
+    });
 
-    // Try processing again
-    const processedCountBefore = service.state.processed.length;
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
+    await act(async () => {
+      await result.current.downloadAll();
+    });
 
-    expect(service.state.processed.length).toBe(processedCountBefore);
+    const names = await readSavedZipEntryNames();
+    expect(names.every((name) => name.includes('new_'))).toBe(true);
+    expect(names).toHaveLength(2);
   });
 
-  it('should clear all state', async () => {
-    const files = [new File(['test'], 'test.png', { type: 'image/png' })];
-    await service.addFiles(files);
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
+  it('自動保存の記録はバッチ単位で、クリア後の 2 バッチ目で張り直される', () => {
+    const store = useImageStore.getState();
 
-    service.clear();
+    let firstBatch = '';
+    act(() => {
+      firstBatch = store.startBatch();
+      useImageStore.getState().markBatchDownloaded(firstBatch);
+    });
+    expect(useImageStore.getState().downloadedBatchId).toBe(firstBatch);
 
-    expect(service.state.files).toHaveLength(0);
-    expect(service.state.processed).toHaveLength(0);
-    expect(service.state.processing).toBe(false);
-  });
+    // クリアでバッチも自動保存の記録も外れる
+    act(() => {
+      useImageStore.getState().clearFiles();
+    });
+    expect(useImageStore.getState().currentBatchId).toBeNull();
+    expect(useImageStore.getState().downloadedBatchId).toBeNull();
 
-  it('should update progress during processing', async () => {
-    const files = [new File(['test'], 'test.png', { type: 'image/png' })];
-    await service.addFiles(files);
-
-    const progressValues: number[] = [];
-    const originalProcessImage = service.processImage.bind(service);
-
-    service.processImage = async function (
-      this: ImageProcessingService,
-      file,
-      targetSize,
-      quality
-    ) {
-      progressValues.push(file.progress);
-      return originalProcessImage(file, targetSize, quality);
-    };
-
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
-
-    // 進捗が記録されていることを確認（具体的な値は実装依存）
-    expect(progressValues.length).toBeGreaterThan(0);
-    expect(service.state.files[0].progress).toBe(100);
-  });
-
-  it('should rename processed files correctly', async () => {
-    const files = [
-      new File(['test'], 'photo.png', { type: 'image/png' }),
-      new File(['test'], 'image.jpg', { type: 'image/jpeg' }),
-    ];
-    await service.addFiles(files);
-
-    await service.runBatch({ width: 1080, height: 1080 }, 90);
-
-    expect(service.state.processed[0].name).toBe('photo_resized.jpg');
-    expect(service.state.processed[1].name).toBe('image_resized.jpg');
+    // 2 バッチ目は別 ID になり、まだ保存済みではない（= 自動保存が再武装する）
+    let secondBatch = '';
+    act(() => {
+      secondBatch = useImageStore.getState().startBatch();
+    });
+    expect(secondBatch).not.toBe(firstBatch);
+    expect(useImageStore.getState().downloadedBatchId).not.toBe(secondBatch);
   });
 });
