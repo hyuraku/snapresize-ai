@@ -59,7 +59,7 @@ jobs:
 
       - name: Upload release gate report on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: deploy-release-gate-report
           path: playwright-report/
