@@ -85,8 +85,10 @@ export default defineConfig({
         // manifest.webmanifest 自体を additionalManifestEntries として常に precache に
         // 追加するため、ここにも加えると同一ファイルが precache に二重登録される。
         globPatterns: ['**/*.{js,mjs,css,html,wasm,svg}'],
-        // WASMファイルが大きいためキャッシュ上限を拡大
-        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MB
+        // WASMファイルが大きいためキャッシュ上限を拡大。
+        // ort-wasm-simd-threaded.asyncify.wasm は onnxruntime-web 1.26 で 23.6 MB、
+        // 1.31 で 26.9 MB（25.6 MiB）。上限を超えると vite-plugin-pwa がビルドを失敗させる。
+        maximumFileSizeToCacheInBytes: 32 * 1024 * 1024, // 32 MiB
         // Cache AI model
         runtimeCaching: [
           {
