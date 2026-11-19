@@ -1,21 +1,26 @@
 # Dependabot の設定
-# 依存パッケージと GitHub Actions の更新を自動でチェックし、PR を作成する
+# - version update: 月 1 回、minor/patch をエコシステムごとに 1 本の PR にまとめる。major は個別 PR
+# - security update: schedule と無関係に、脆弱性の公開時に即座に PR が来る（1 本にまとめる）
+# - cooldown: 新しいリリースは 7 日待ってから取り込む（security update には効かない）
+# 自動マージの条件は .github/workflows/ci.yml の dependabot-auto-merge job を参照
+# 参考: https://github.blog/security/supply-chain-security/tame-dependabot-group-your-updates-slow-the-cadence-keep-security-fast/
 version: 2
 updates:
   # npm パッケージの更新
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
+    cooldown:
+      default-days: 7
     # 同時に開く PR の上限
     open-pull-requests-limit: 10
-    # peer 依存で連動するパッケージを 1 つの PR にまとめる
+    # グループは上から順に照合され、最初に一致したものに入る
     groups:
       # vite 本体とプラグイン群は peer 依存で世代が固定される。
       # 例: @vitejs/plugin-react 6 は peer に vite ^8 を要求するため、
       # vite 7 のまま plugin-react だけ上げる PR は npm ci が ERESOLVE で必ず落ちる。
-      # major だけをグループ化することで、minor / patch は従来どおり
-      # 個別 PR として自動マージ対象のまま残す。
+      # major だけをこのグループにまとめ、minor / patch は下の minor-and-patch に入れる。
       vite:
         patterns:
           - 'vite'
@@ -34,6 +39,15 @@ updates:
           - '@typescript-eslint/*'
         update-types:
           - 'major'
+      # 残りの minor / patch は月 1 本にまとめる（CI が通れば自動マージ）
+      minor-and-patch:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      # security update は 1 本にまとめる（patch だけなら CI が通れば自動マージ）
+      security:
+        applies-to: security-updates
+        patterns: ['*']
     ignore:
       # TypeScript 7 は Go への移植版 (tsgo) で、typescript-eslint がまだ対応していない。
       # 8.65.0 と canary 8.65.1-alpha.7 の peer はいずれも
@@ -43,7 +57,6 @@ updates:
       - dependency-name: 'typescript'
         versions:
           - '>= 7'
-    # 自動マージワークフローで判別しやすいようにラベルを付与
     labels:
       - 'dependencies'
     # コミットメッセージに更新種別のプレフィックスを付与
@@ -56,8 +69,20 @@ updates:
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      # actions は major 更新が多いので、major も月 1 本にまとめる（手動レビュー）
+      actions-major:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: ['major']
     labels:
       - 'dependencies'
       - 'github-actions'
